@@ -1,0 +1,55 @@
+# ─── Dependencies ────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ─── Build Outputs ───────────────────────────
+dist/
+build/
+server/dist/
+client/dist/
+
+# ─── Environment Files (NEVER commit secrets) ─
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# ─── Logs ────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ─── Database ────────────────────────────────
+*.db
+*.db-journal
+tsc.log
+
+# ─── Editor ──────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── OS ──────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ─── Testing ─────────────────────────────────
+coverage/
+.nyc_output/
+
+# ─── Docker ──────────────────────────────────
+.dockerignore

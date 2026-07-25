@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # ─── Frontend (React + Nginx) ───────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        # VITE_API_URL is empty — nginx proxies /api to server internally
+        VITE_API_URL: ""
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - moneyos_network
+    restart: unless-stopped
+
+  # ─── Backend API (Node + Express) ──────────────────────
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CLIENT_URL: ${CLIENT_URL}
+      DATABASE_URL: ${DATABASE_URL}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-receipts}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - moneyos_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # ─── Background Worker (BullMQ) ─────────────────────────
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: node dist/worker.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-receipts}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+      - server
+    networks:
+      - moneyos_network
+    restart: unless-stopped
+
+  # ─── Redis (BullMQ & Cache) ─────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    networks:
+      - moneyos_network
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  moneyos_network:
+    driver: bridge
