@@ -10,8 +10,12 @@ class Scheduler {
   public async start() {
     logger.info("🕒 Starting background job scheduler...");
 
-    // Seed default coaching challenges
-    await coachService.seedDefaultChallenges();
+    // Seed default coaching challenges (non-fatal — skip if DB not reachable yet)
+    try {
+      await coachService.seedDefaultChallenges();
+    } catch (err: any) {
+      logger.warn("⚠️  Could not seed coaching challenges (DB may not be ready): " + err.message);
+    }
 
     // Process recurring transactions every day at midnight
     cron.schedule("0 0 * * *", async () => {

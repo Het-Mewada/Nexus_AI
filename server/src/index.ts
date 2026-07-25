@@ -49,7 +49,9 @@ app.listen(env.PORT, () => {
   logger.info(`📊 Environment: ${env.NODE_ENV}`);
   logger.info(`🌐 Client URL: ${env.CLIENT_URL}`);
 
-  scheduler.start();
+  scheduler.start().catch((err) => {
+    logger.error("⚠️  Scheduler failed to start (non-fatal): " + err.message);
+  });
 });
 
 export default app;
