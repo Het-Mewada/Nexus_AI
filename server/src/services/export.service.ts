@@ -1,6 +1,15 @@
 import { prisma } from "../config/database";
 import { toNumber, getMonthName } from "../utils/helpers";
 
+function sanitizeCSVCell(value: string | null | undefined): string {
+  if (!value) return '""';
+  let str = value.replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`; // Neutralizes formula execution
+  }
+  return `"${str}"`;
+}
+
 export class ExportService {
   async exportCSV(userId: string): Promise<string> {
     const [incomes, expenses, salaryRecords] = await Promise.all([
@@ -27,23 +36,23 @@ export class ExportService {
     csv += "Date,Source,Amount,Currency,Recurring,Notes\n";
     for (const income of incomes) {
       csv += `${income.date.toISOString().split("T")[0]},`;
-      csv += `"${income.source}",`;
+      csv += `${sanitizeCSVCell(income.source)},`;
       csv += `${toNumber(income.amount)},`;
       csv += `${income.currency},`;
       csv += `${income.isRecurring ? "Yes" : "No"},`;
-      csv += `"${(income.notes || "").replace(/"/g, '""')}"\n`;
+      csv += `${sanitizeCSVCell(income.notes)}\n`;
     }
 
     csv += "\n=== EXPENSES ===\n";
     csv += "Date,Merchant,Category,Amount,Payment Method,Tags,Notes\n";
     for (const expense of expenses) {
       csv += `${expense.date.toISOString().split("T")[0]},`;
-      csv += `"${expense.merchant}",`;
-      csv += `"${expense.category.name}",`;
+      csv += `${sanitizeCSVCell(expense.merchant)},`;
+      csv += `${sanitizeCSVCell(expense.category.name)},`;
       csv += `${toNumber(expense.amount)},`;
       csv += `${expense.paymentMethod},`;
-      csv += `"${expense.tags.join("; ")}",`;
-      csv += `"${(expense.notes || "").replace(/"/g, '""')}"\n`;
+      csv += `${sanitizeCSVCell(expense.tags.join("; "))},`;
+      csv += `${sanitizeCSVCell(expense.notes)}\n`;
     }
 
     csv += "\n=== SALARY RECORDS ===\n";

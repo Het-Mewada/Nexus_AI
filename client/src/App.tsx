@@ -56,6 +56,13 @@ const queryClient = new QueryClient({
   },
 });
 
+const channel = new BroadcastChannel('moneyos-sync');
+channel.onmessage = (event) => {
+  if (event.data?.type === 'INVALIDATE_QUERIES') {
+    queryClient.invalidateQueries();
+  }
+};
+
 // Loading Fallback
 const PageLoader = () => (
   <div className="flex h-[50vh] items-center justify-center">

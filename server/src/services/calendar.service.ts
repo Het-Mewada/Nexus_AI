@@ -172,7 +172,11 @@ export class CalendarService {
         } else if (event.recurrence === "WEEKLY") {
           currentStart.setDate(currentStart.getDate() + 7);
         } else if (event.recurrence === "MONTHLY") {
+          const originalDay = new Date(event.date).getDate();
+          currentStart.setDate(1); // Reset to 1st to prevent month skip
           currentStart.setMonth(currentStart.getMonth() + 1);
+          const daysInNewMonth = new Date(currentStart.getFullYear(), currentStart.getMonth() + 1, 0).getDate();
+          currentStart.setDate(Math.min(originalDay, daysInNewMonth));
         } else if (event.recurrence === "YEARLY") {
           currentStart.setFullYear(currentStart.getFullYear() + 1);
         } else {

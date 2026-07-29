@@ -1,8 +1,7 @@
-import { PrismaClient, SmartSaving, Achievement } from '@prisma/client';
+import { SmartSaving, Achievement } from '@prisma/client';
 import { aiService } from './ai.service';
 import { v4 as uuidv4 } from 'uuid';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export class SmartSavingsService {
   /**

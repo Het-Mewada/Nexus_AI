@@ -1,10 +1,9 @@
 import { Worker, Job } from 'bullmq';
 import { redisConnection } from './config/queue';
 import { logger } from './utils/logger';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './config/database';
 import { MarketService } from './services/market.service';
 
-const prisma = new PrismaClient();
 const marketService = new MarketService();
 
 logger.info('Starting MoneyOS AI Background Worker...');
@@ -54,9 +53,11 @@ const liabilityWorker = new Worker(
     if (job.name === 'processUpcomingLiabilities') {
       const { loanService } = await import('./services/loan.service');
       const { insuranceService } = await import('./services/insurance.service');
+      const { subscriptionService } = await import('./services/subscription.service');
       
       await loanService.processUpcomingEMIs();
       await insuranceService.processUpcomingPremiums();
+      await subscriptionService.processUpcomingPayments();
     }
   },
   { connection: redisConnection as any }
@@ -67,16 +68,20 @@ const aiCfoWorker = new Worker(
   async (job: Job) => {
     logger.info(`Processing AI CFO job ${job.id} of type ${job.name}`);
     if (job.name === 'generateProactiveRecommendations') {
-      const { aiCfoService } = await import('./services/ai-cfo.service');
+      const { aiCfoQueue } = await import('./config/queue');
       const users = await prisma.user.findMany({ where: { deletedAt: null }, select: { id: true } });
       for (const user of users) {
-        try {
-          await aiCfoService.generateProactiveRecommendations(user.id);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (error: any) {
-          logger.error(`Failed to generate AI CFO recommendations for user ${user.id}`, { error: error.message });
-        }
+        await aiCfoQueue.add('generateUserCfoRecommendation', { userId: user.id }, {
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+        });
       }
+    } else if (job.name === 'generateUserCfoRecommendation') {
+      const { aiCfoService } = await import('./services/ai-cfo.service');
+      await aiCfoService.generateProactiveRecommendations(job.data.userId);
+    } else if (job.name === 'runUserFinancialAgent') {
+      const { financialAgentService } = await import('./services/financial-agent.service');
+      await financialAgentService.runAgentAnalysis(job.data.userId);
     }
   },
   { connection: redisConnection as any }

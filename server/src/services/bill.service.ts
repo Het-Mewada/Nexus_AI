@@ -69,6 +69,24 @@ export class BillService {
     const existing = await prisma.bill.findFirst({ where: { id, userId, deletedAt: null } });
     if (!existing) throw new AppError(404, 'BILL_NOT_FOUND', 'Bill not found');
 
+    if (existing.isRecurring) {
+      const originalDay = new Date(existing.dueDate).getDate();
+      const nextDueDate = new Date(existing.dueDate);
+      nextDueDate.setDate(1); // Reset to 1st to prevent month skip
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      const daysInNewMonth = new Date(nextDueDate.getFullYear(), nextDueDate.getMonth() + 1, 0).getDate();
+      nextDueDate.setDate(Math.min(originalDay, daysInNewMonth));
+
+      return prisma.bill.update({
+        where: { id },
+        data: {
+          isPaid: false,
+          dueDate: nextDueDate,
+        },
+        include: { category: true },
+      });
+    }
+
     return prisma.bill.update({
       where: { id },
       data: { isPaid: true },

@@ -35,6 +35,8 @@ export class TaxService {
     nps80ccd?: number;
     otherDeductions?: number;
   }) {
+    const isNewRegime = (data.taxRegime || 'NEW') === 'NEW';
+
     return prisma.taxProfile.create({
       data: {
         userId,
@@ -45,16 +47,16 @@ export class TaxService {
         taxPaid: data.taxPaid || 0,
         taxRegime: data.taxRegime || 'NEW',
         basicSalary: data.basicSalary || 0,
-        hra: data.hra || 0,
-        lta: data.lta || 0,
+        hra: isNewRegime ? 0 : (data.hra || 0),
+        lta: isNewRegime ? 0 : (data.lta || 0),
         specialAllowance: data.specialAllowance || 0,
         pfDeduction: data.pfDeduction || 0,
         ptDeduction: data.ptDeduction || 0,
-        investments80c: data.investments80c || 0,
-        medical80d: data.medical80d || 0,
+        investments80c: isNewRegime ? 0 : Math.min(150000, data.investments80c || 0),
+        medical80d: isNewRegime ? 0 : (data.medical80d || 0),
         educationLoan80e: data.educationLoan80e || 0,
         homeLoanInterest24b: data.homeLoanInterest24b || 0,
-        nps80ccd: data.nps80ccd || 0,
+        nps80ccd: isNewRegime ? 0 : Math.min(50000, data.nps80ccd || 0),
         otherDeductions: data.otherDeductions || 0,
       },
     });
@@ -83,9 +85,23 @@ export class TaxService {
     const existing = await prisma.taxProfile.findFirst({ where: { id, userId } });
     if (!existing) throw new AppError(404, 'TAX_PROFILE_NOT_FOUND', 'Tax profile not found');
 
+    const isNewRegime = (data.taxRegime || existing.taxRegime) === 'NEW';
+    const finalData = { ...data };
+    
+    if (isNewRegime) {
+      finalData.hra = 0;
+      finalData.lta = 0;
+      finalData.medical80d = 0;
+      finalData.investments80c = 0;
+      finalData.nps80ccd = 0;
+    } else {
+      if (finalData.investments80c !== undefined) finalData.investments80c = Math.min(150000, finalData.investments80c);
+      if (finalData.nps80ccd !== undefined) finalData.nps80ccd = Math.min(50000, finalData.nps80ccd);
+    }
+
     return prisma.taxProfile.update({
       where: { id },
-      data,
+      data: finalData,
     });
   }
 

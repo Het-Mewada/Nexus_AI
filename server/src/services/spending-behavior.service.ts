@@ -13,7 +13,7 @@ export class SpendingBehaviorService {
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
       const expenses = await prisma.expense.findMany({
-        where: { userId, date: { gte: ninetyDaysAgo } },
+        where: { userId, deletedAt: null, date: { gte: ninetyDaysAgo } },
         include: { category: true },
         orderBy: { date: 'desc' },
       });

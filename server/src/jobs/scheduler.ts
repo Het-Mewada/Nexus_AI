@@ -49,7 +49,8 @@ class Scheduler {
                 source: income.source,
                 date: today,
                 notes: `[Auto] Recurring from ${income.source}`,
-                isRecurring: true,
+                isRecurring: false,
+                duplicateId: income.id,
                 currency: income.currency,
               },
             });

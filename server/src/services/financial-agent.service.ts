@@ -48,12 +48,17 @@ export class FinancialAgentService {
 
     // Budgets
     const budgets = await prisma.budget.findMany({ where: { userId }, include: { category: true } });
-    const budgetData = budgets.map((b) => ({
-      category: b.category?.name || 'Overall',
-      limit: Number(b.amount),
-      spent: categoryTotals[b.category?.name || ''] || 0,
-      utilization: b.category?.name ? ((categoryTotals[b.category.name] || 0) / Number(b.amount)) * 100 : (totalSpent / Number(b.amount)) * 100,
-    }));
+    const budgetData = budgets.map((b) => {
+      const limit = Number(b.amount);
+      const spent = b.category?.name ? (categoryTotals[b.category.name] || 0) : totalSpent;
+      const utilization = limit > 0 ? (spent / limit) * 100 : 0;
+      return {
+        category: b.category?.name || 'Overall',
+        limit,
+        spent,
+        utilization,
+      };
+    });
 
     // Goals
     const goals = await prisma.goal.findMany({ where: { userId, deletedAt: null } });
@@ -274,13 +279,15 @@ CRITICAL RULES:
 
     logger.info(`Running financial agent for ${users.length} users...`);
 
+    const { aiCfoQueue } = await import('../config/queue');
     for (const user of users) {
-      await this.runAgentAnalysis(user.id);
-      // Small delay to avoid API rate limits
-      await new Promise((r) => setTimeout(r, 2000));
+      await aiCfoQueue.add('runUserFinancialAgent', { userId: user.id }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+      });
     }
 
-    logger.info('Financial agent run complete.');
+    logger.info('Financial agent tasks enqueued.');
   }
 
   /**

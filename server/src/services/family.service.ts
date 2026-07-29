@@ -137,11 +137,17 @@ export class FamilyService {
     if (!wallet) throw new Error('Wallet not found');
     await this.checkGroupAccess(userId, wallet.familyGroupId);
 
-    if (data.type === 'WITHDRAWAL' && Number(wallet.balance) < data.amount) {
-      throw new Error('Insufficient funds in shared wallet');
-    }
-
     return prisma.$transaction(async (tx) => {
+      const currentWallet = await tx.sharedWallet.findUnique({
+        where: { id: walletId },
+      });
+      
+      if (!currentWallet) throw new Error('Wallet not found');
+      
+      if (data.type === 'WITHDRAWAL' && currentWallet.balance.lessThan(data.amount)) {
+        throw new Error('Insufficient funds in shared wallet');
+      }
+
       const transaction = await tx.sharedWalletTransaction.create({
         data: {
           walletId,

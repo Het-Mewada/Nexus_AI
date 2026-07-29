@@ -88,6 +88,14 @@ export const deleteWallet = async (req: AuthRequest, res: Response) => {
   }
 };
 
+import { z } from 'zod';
+
+export const createWalletTransactionSchema = z.object({
+  type: z.enum(['DEPOSIT', 'WITHDRAWAL']),
+  amount: z.number().positive('Amount must be greater than 0'),
+  description: z.string().optional(),
+});
+
 export const addWalletTransaction = async (req: AuthRequest, res: Response) => {
   try {
     const { type, amount, description } = req.body;
@@ -96,7 +104,22 @@ export const addWalletTransaction = async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const transaction = await familyService.addWalletTransaction(req.user!.id, req.params.walletId as string, { type, amount: Number(amount), description });
+    const validation = createWalletTransactionSchema.safeParse({ 
+      type, 
+      amount: Number(amount), 
+      description 
+    });
+
+    if (!validation.success) {
+      res.status(400).json({ success: false, error: { message: validation.error.errors[0].message } });
+      return;
+    }
+
+    const transaction = await familyService.addWalletTransaction(
+      req.user!.id, 
+      req.params.walletId as string, 
+      validation.data
+    );
     sendSuccess(res, transaction, 'Transaction added successfully', 201);
   } catch (error: any) {
     logger.error('Failed to add wallet transaction', { error });

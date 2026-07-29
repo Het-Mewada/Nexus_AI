@@ -97,10 +97,14 @@ export class AiCfoService {
   }
 
   async updateRecommendationStatus(id: string, userId: string, status: "ACCEPTED" | "DISMISSED" | "POSTPONED") {
-    return prisma.aiCfoRecommendation.update({
-      where: { id, userId }, // Ensure user owns the recommendation
+    const result = await prisma.aiCfoRecommendation.updateMany({
+      where: { id, userId },
       data: { status }
     });
+    if (result.count === 0) {
+      throw new Error("Recommendation not found or access denied");
+    }
+    return prisma.aiCfoRecommendation.findUnique({ where: { id } });
   }
 }
 

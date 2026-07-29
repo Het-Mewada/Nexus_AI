@@ -105,7 +105,13 @@ export class MarketService {
     return { success: true };
   }
 
+  private ipoCache: { data: any[]; expiresAt: number } | null = null;
+
   async getIpos() {
+    if (this.ipoCache && Date.now() < this.ipoCache.expiresAt) {
+      return this.ipoCache.data;
+    }
+
     try {
       const headers: any = {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -179,10 +185,14 @@ export class MarketService {
       const pastIpos = fallbacks.filter(i => i.status === 'Closed' || i.status === 'Upcoming');
       
       const merged = [...realIpos, ...pastIpos];
-      return merged.length > 0 ? merged : fallbacks;
+      const result = merged.length > 0 ? merged : fallbacks;
+      this.ipoCache = { data: result, expiresAt: Date.now() + 60 * 60 * 1000 }; // 1 hour cache
+      return result;
     } catch(err) {
       console.error('IPO Scrape Error:', err);
-      return await this.fallbackIpos();
+      const result = await this.fallbackIpos();
+      this.ipoCache = { data: result, expiresAt: Date.now() + 60 * 60 * 1000 };
+      return result;
     }
   }
   

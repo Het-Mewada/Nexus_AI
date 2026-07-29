@@ -1,4 +1,4 @@
-﻿import { salaryRepository } from "../repositories/salary.repository";
+import { salaryRepository } from "../repositories/salary.repository";
 import { AppError } from "../middleware/errorHandler";
 import { calculateExpectedSalary } from "../utils/helpers";
 import { prisma } from "../config/database";
@@ -71,7 +71,9 @@ export class SalaryService {
       unpaidCL,
       unpaidHalfDays,
       bonus,
-      otherDeductions
+      otherDeductions,
+      data.year,
+      data.month
     );
 
     let record;
@@ -173,8 +175,11 @@ export class SalaryService {
   async delete(id: string, userId: string) {
     const existing = await salaryRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "SALARY_NOT_FOUND", "Salary record not found");
-
-    await salaryRepository.delete(id, userId);
+    const sourceName = `Salary - ${existing.month}/${existing.year}`;
+    await prisma.$transaction([
+      prisma.income.deleteMany({ where: { userId, source: sourceName } }),
+      prisma.salaryRecord.delete({ where: { id } }),
+    ]);
     return { message: "Salary record deleted successfully" };
   }
 }

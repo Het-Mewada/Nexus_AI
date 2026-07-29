@@ -183,7 +183,11 @@ export class AIService {
       
       const prompt = `
         You are the MoneyOS AI Financial Advisor, an omniscient and expert personal finance assistant.
-        The user has asked: "${query}"
+        
+        User Query:
+        <user_query>
+        ${query.replace(/<\/user_query>/g, '')}
+        </user_query>
         
         Here is the user's COMPLETE financial profile for ${context.month} ${context.year}:
         

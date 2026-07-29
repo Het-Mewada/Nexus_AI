@@ -129,16 +129,14 @@ export class ConversationService {
       },
     });
 
-    // Build conversation history for context
-    const history = conversation.messages.map((m) => ({
-      role: m.role as 'user' | 'model',
+    // Filter out system messages and map roles for Gemini
+    const validMessages = conversation.messages.filter(
+      (m) => m.role === 'user' || m.role === 'assistant' || m.role === 'model'
+    );
+    
+    const geminiHistory = validMessages.map((m) => ({
+      role: m.role === 'user' ? 'user' as const : 'model' as const,
       parts: [{ text: m.content }],
-    }));
-
-    // Remap 'assistant' to 'model' for Gemini
-    const geminiHistory = history.map((h) => ({
-      ...h,
-      role: h.role === 'user' ? 'user' as const : 'model' as const,
     }));
 
     // Fetch cross-conversation memory (recent messages from other conversations)
@@ -176,14 +174,26 @@ RULES:
 - Be friendly but professional.`;
 
     try {
+      const rawContents = [
+        { role: 'user' as const, parts: [{ text: systemPrompt }] },
+        { role: 'model' as const, parts: [{ text: 'Understood. I have full access to your financial data and our conversation history. How can I help you today?' }] },
+        ...geminiHistory,
+        { role: 'user' as const, parts: [{ text: userMessage }] },
+      ];
+
+      // Collapse consecutive roles to satisfy Gemini's strict alternation requirement
+      const collapsedContents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+      for (const msg of rawContents) {
+        if (collapsedContents.length > 0 && collapsedContents[collapsedContents.length - 1].role === msg.role) {
+          collapsedContents[collapsedContents.length - 1].parts[0].text += `\n\n${msg.parts[0].text}`;
+        } else {
+          collapsedContents.push(msg);
+        }
+      }
+
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: [
-          { role: 'user', parts: [{ text: systemPrompt }] },
-          { role: 'model', parts: [{ text: 'Understood. I have full access to your financial data and our conversation history. How can I help you today?' }] },
-          ...geminiHistory,
-          { role: 'user', parts: [{ text: userMessage }] },
-        ],
+        contents: collapsedContents,
       });
 
       const aiContent = response.text || "I'm sorry, I couldn't process your request right now.";

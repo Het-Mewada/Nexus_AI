@@ -75,6 +75,33 @@ export class SubscriptionService {
     await prisma.subscription.delete({ where: { id } });
     return { message: 'Subscription deleted successfully' };
   }
+
+  async processUpcomingPayments() {
+    const now = new Date();
+    const dueSubscriptions = await prisma.subscription.findMany({
+      where: { status: 'ACTIVE', nextPayment: { lte: now } },
+    });
+
+    for (const sub of dueSubscriptions) {
+      const originalDay = new Date(sub.nextPayment).getDate();
+      const nextDate = new Date(sub.nextPayment);
+      nextDate.setDate(1);
+
+      if (sub.billingCycle === 'YEARLY') {
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        nextDate.setDate(originalDay);
+      } else { // MONTHLY
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        const daysInNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+        nextDate.setDate(Math.min(originalDay, daysInNewMonth));
+      }
+
+      await prisma.subscription.update({
+        where: { id: sub.id },
+        data: { nextPayment: nextDate },
+      });
+    }
+  }
 }
 
 export const subscriptionService = new SubscriptionService();

@@ -27,14 +27,20 @@ export function getCurrentMonthRange(): { start: Date; end: Date } {
   return getMonthDateRange(now.getFullYear(), now.getMonth() + 1);
 }
 
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
 export function calculateExpectedSalary(
   baseSalary: number,
   leaves: number,
   halfDays: number,
   bonus: number,
-  otherDeductions: number
+  otherDeductions: number,
+  year: number,
+  month: number
 ): number {
-  const workingDays = 30;
+  const workingDays = getDaysInMonth(year, month);
   const perDayRate = baseSalary / workingDays;
   const leaveDeduction = leaves * perDayRate;
   const halfDayDeduction = halfDays * (perDayRate / 2);

@@ -56,13 +56,25 @@ export class LoanService {
       });
 
       for (const loan of activeLoans) {
+        const todayStr = new Date().toDateString();
+        const updatedStr = new Date(loan.updatedAt).toDateString();
+        
+        if (updatedStr === todayStr) {
+           logger.info(`EMI for loan ${loan.id} already processed today. Skipping.`);
+           continue;
+        }
+
         logger.info(`Processing EMI for loan ${loan.id}`);
         
+        const monthlyRate = Number(loan.interestRate) / 12 / 100;
+        const interestPortion = Number(loan.outstandingAmount) * monthlyRate;
+        const principalPortion = Number(loan.emiAmount) - interestPortion;
+
         await prisma.loan.update({
           where: { id: loan.id },
           data: { 
             outstandingAmount: {
-              decrement: loan.emiAmount
+              decrement: Math.max(0, principalPortion)
             },
             remainingMonths: {
               decrement: 1
