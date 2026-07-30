@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocalStorage, useDebounce } from "@/hooks";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { expenseApi, categoryApi } from "@/services/api";
 import { formatCurrency, formatDate, paymentMethods } from "@/lib/utils";
-import { useDebounce } from "@/hooks";
 import { toast } from "sonner";
 import type { Expense, Category } from "@/types";
 
@@ -36,11 +36,11 @@ export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useLocalStorage("exp_search", "");
   const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [sortBy, setSortBy] = useLocalStorage("exp_sortBy", "date");
+  const [sortOrder, setSortOrder] = useLocalStorage<"asc" | "desc">("exp_sortOrder", "desc");
+  const [filterCategory, setFilterCategory] = useLocalStorage("exp_filterCategory", "");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 

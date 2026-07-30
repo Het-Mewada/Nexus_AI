@@ -11,7 +11,7 @@ export const getLoans = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, loans);
   } catch (error) {
     logger.error('Failed to get loans', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch loans' } });
+    throw error;
   }
 };
 
@@ -21,7 +21,7 @@ export const addLoan = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, loan, 'Loan added successfully', 201);
   } catch (error) {
     logger.error('Failed to add loan', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to add loan' } });
+    throw error;
   }
 };
 
@@ -51,7 +51,7 @@ export const getInsurancePolicies = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, policies);
   } catch (error) {
     logger.error('Failed to get insurance policies', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch insurance policies' } });
+    throw error;
   }
 };
 
@@ -61,7 +61,7 @@ export const addInsurance = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, policy, 'Insurance added successfully', 201);
   } catch (error) {
     logger.error('Failed to add insurance', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to add insurance' } });
+    throw error;
   }
 };
 

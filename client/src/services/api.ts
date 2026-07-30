@@ -185,8 +185,9 @@ export const investmentApi = {
   addInvestment: (data: Partial<Investment>) => api.post<ApiResponse<Investment>>("/investments/portfolio", data).then((r) => r.data),
   updateInvestment: (id: string, data: Partial<Investment>) => api.patch<ApiResponse<Investment>>(`/investments/portfolio/${id}`, data).then((r) => r.data),
   deleteInvestment: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/investments/portfolio/${id}`).then((r) => r.data),
-  sellInvestment: (data: { symbol: string, quantity: number, currentPrice: number }) => api.post<ApiResponse<{ message: string }>>("/investments/portfolio/sell", data).then((r) => r.data),
+  sellInvestment: (data: { symbol: string, quantity: number, currentPrice: number, executionPrice?: number }) => api.post<ApiResponse<{ message: string }>>("/investments/portfolio/sell", data).then((r) => r.data),
   searchMarket: (query: string) => api.get<ApiResponse<any[]>>("/investments/market/search", { params: { query } }).then((r) => r.data),
+  getTransactions: (symbol?: string) => api.get<ApiResponse<any[]>>("/investments/portfolio/transactions", { params: { symbol } }).then((r) => r.data),
 };
 
 export const liabilityApi = {
@@ -295,6 +296,7 @@ export const contactsApi = {
   list: (params?: Record<string, string>) => api.get<ApiResponse<Contact[]>>("/contacts", { params }).then((r) => r.data),
   getById: (id: string) => api.get<ApiResponse<Contact>>(`/contacts/${id}`).then((r) => r.data),
   create: (data: Partial<Contact>) => api.post<ApiResponse<Contact>>("/contacts", data).then((r) => r.data),
+  bulkCreate: (contacts: Partial<Contact>[]) => api.post<ApiResponse<{ count: number }>>("/contacts/bulk", { contacts }).then((r) => r.data),
   update: (id: string, data: Partial<Contact>) => api.put<ApiResponse<Contact>>(`/contacts/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/contacts/${id}`).then((r) => r.data),
 };

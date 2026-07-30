@@ -13,7 +13,7 @@ export const createGroup = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, group, 'Family group created successfully', 201);
   } catch (error) {
     logger.error('Failed to create family group', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to create family group' } });
+    throw error;
   }
 };
 export const joinGroup = async (req: AuthRequest, res: Response) => {
@@ -35,7 +35,7 @@ export const getMyGroups = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, groups);
   } catch (error) {
     logger.error('Failed to get family groups', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch family groups' } });
+    throw error;
   }
 };
 

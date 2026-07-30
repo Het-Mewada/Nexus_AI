@@ -10,7 +10,7 @@ export class AiCfoController {
       res.json(recommendations);
     } catch (error: any) {
       logger.error("Error fetching AI CFO recommendations", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 
@@ -28,7 +28,7 @@ export class AiCfoController {
       res.json(updated);
     } catch (error: any) {
       logger.error("Error updating AI CFO recommendation status", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 
@@ -38,7 +38,7 @@ export class AiCfoController {
       res.json(newRecs);
     } catch (error: any) {
       logger.error("Error generating AI CFO recommendations manually", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 }

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
 import { env } from "./config/env";
 import { corsOptions } from "./config/cors";
 import { generalLimiter } from "./middleware/rateLimiter";
@@ -16,6 +17,9 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 app.use(cors(corsOptions));
+app.use(morgan(env.NODE_ENV === "development" ? "dev" : "combined", {
+  stream: { write: (message) => logger.info(message.trim()) }
+}));
 app.use(generalLimiter);
 
 // ─── Body Parsing ────────────────────────────────

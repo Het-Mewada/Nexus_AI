@@ -10,7 +10,7 @@ export const getContacts = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, contacts);
   } catch (error: any) {
     logger.error('Failed to get contacts', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to get contacts' } });
+    throw error;
   }
 };
 
@@ -29,7 +29,22 @@ export const createContact = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, contact, 'Contact created', 201);
   } catch (error: any) {
     logger.error('Failed to create contact', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to create contact' } });
+    throw error;
+  }
+};
+
+export const bulkCreateContacts = async (req: AuthRequest, res: Response) => {
+  try {
+    const { contacts } = req.body;
+    if (!Array.isArray(contacts)) {
+      res.status(400).json({ success: false, error: { message: 'Expected an array of contacts' } });
+      return;
+    }
+    const result = await contactsService.bulkCreateContacts(req.user!.id, contacts);
+    sendSuccess(res, result, `${result.count} contacts created successfully`, 201);
+  } catch (error: any) {
+    logger.error('Failed to bulk create contacts', { error });
+    throw error;
   }
 };
 

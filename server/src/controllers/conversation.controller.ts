@@ -11,7 +11,7 @@ export const listConversations = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, conversations);
   } catch (error: any) {
     logger.error('Failed to list conversations', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to list conversations' } });
+    throw error;
   }
 };
 
@@ -29,7 +29,7 @@ export const createConversation = async (req: AuthRequest, res: Response) => {
     const conversation = await conversationService.createConversation(req.user!.id, req.body.title);
     sendSuccess(res, conversation, 'Conversation created', 201);
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to create conversation' } });
+    throw error;
   }
 };
 
@@ -73,7 +73,7 @@ export const getAgentInsights = async (req: AuthRequest, res: Response) => {
     const insights = await financialAgentService.getInsights(req.user!.id);
     sendSuccess(res, insights);
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch insights' } });
+    throw error;
   }
 };
 
@@ -83,7 +83,7 @@ export const runAgentAnalysis = async (req: AuthRequest, res: Response) => {
     const insights = await financialAgentService.getInsights(req.user!.id);
     sendSuccess(res, insights, 'Analysis complete');
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to run analysis' } });
+    throw error;
   }
 };
 
@@ -92,7 +92,7 @@ export const markInsightRead = async (req: AuthRequest, res: Response) => {
     await financialAgentService.markInsightRead(req.user!.id, req.params.id as string);
     sendSuccess(res, { message: 'Insight marked as read' });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to mark insight' } });
+    throw error;
   }
 };
 
@@ -101,7 +101,7 @@ export const dismissInsight = async (req: AuthRequest, res: Response) => {
     await financialAgentService.dismissInsight(req.user!.id, req.params.id as string);
     sendSuccess(res, { message: 'Insight dismissed' });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to dismiss insight' } });
+    throw error;
   }
 };
 

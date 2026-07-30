@@ -10,7 +10,7 @@ export const getDailyTip = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, tip);
   } catch (error: any) {
     logger.error('Failed to get daily tip', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to get daily tip' } });
+    throw error;
   }
 };
 
@@ -20,7 +20,7 @@ export const getWeeklyReview = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, review);
   } catch (error: any) {
     logger.error('Failed to get weekly review', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to get weekly review' } });
+    throw error;
   }
 };
 
@@ -29,7 +29,7 @@ export const getChallenges = async (_req: AuthRequest, res: Response) => {
     const challenges = await coachService.getChallenges();
     sendSuccess(res, challenges);
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch challenges' } });
+    throw error;
   }
 };
 
@@ -38,7 +38,7 @@ export const getUserChallenges = async (req: AuthRequest, res: Response) => {
     const challenges = await coachService.getUserChallenges(req.user!.id);
     sendSuccess(res, challenges);
   } catch (error: any) {
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch user challenges' } });
+    throw error;
   }
 };
 

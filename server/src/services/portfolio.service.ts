@@ -9,7 +9,7 @@ export class PortfolioService {
   async getPortfolioSummary(userId: string) {
     try {
       const investments = await prisma.investment.findMany({
-        where: { userId },
+        where: { userId, quantity: { gt: 0 } },
       });
 
       // Get unique symbols for market-linked investments
@@ -83,12 +83,118 @@ export class PortfolioService {
     }
   }
 
+  async getInvestmentCategory(userId: string, tx: any) {
+    let category = await tx.category.findFirst({
+      where: { userId, name: 'Investments' }
+    });
+    if (!category) {
+      category = await tx.category.create({
+        data: {
+          userId,
+          name: 'Investments',
+          color: '#10b981',
+          icon: 'trending-up',
+        }
+      });
+    }
+    return category.id;
+  }
+
   async addInvestment(userId: string, data: any) {
-    return prisma.investment.create({
-      data: {
-        ...data,
-        userId,
-      },
+    const { symbol, quantity, averagePrice, type, name, currency, investedAmount, currentPrice, notes } = data;
+    
+    if (quantity === undefined || Number(quantity) <= 0) {
+      throw new AppError(400, 'INVALID_QUANTITY', 'Quantity must be greater than zero');
+    }
+    if (averagePrice === undefined || Number(averagePrice) < 0) {
+      throw new AppError(400, 'INVALID_PRICE', 'Average price cannot be negative');
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const newQuantity = new Decimal(quantity);
+      const newPrice = new Decimal(averagePrice);
+      const newInvestedAmount = newQuantity.mul(newPrice);
+      
+      const incomes = await tx.income.aggregate({
+        where: { userId },
+        _sum: { amount: true }
+      });
+      const expenses = await tx.expense.aggregate({
+        where: { userId },
+        _sum: { amount: true }
+      });
+      const totalIncome = new Decimal(incomes._sum.amount || 0);
+      const totalExpense = new Decimal(expenses._sum.amount || 0);
+      const availableBalance = totalIncome.sub(totalExpense);
+      
+      if (availableBalance.lessThan(newInvestedAmount)) {
+        throw new AppError(400, 'INSUFFICIENT_FUNDS', `Not enough balance. You need ₹${newInvestedAmount.toNumber().toFixed(2)} but have ₹${availableBalance.toNumber().toFixed(2)}`);
+      }
+
+      const categoryId = await this.getInvestmentCategory(userId, tx);
+
+      await tx.expense.create({
+        data: {
+          userId,
+          categoryId,
+          amount: newInvestedAmount,
+          merchant: `Investment: ${symbol}`,
+          date: new Date(),
+          paymentMethod: 'bank_transfer',
+          notes: `Purchased ${newQuantity.toNumber()} shares of ${symbol} at ₹${newPrice.toNumber()}`
+        }
+      });
+      
+      let investment = await tx.investment.findFirst({
+        where: { userId, symbol, type }
+      });
+
+      if (investment) {
+        const existingQuantity = new Decimal(investment.quantity);
+        const existingInvestedAmount = new Decimal(investment.investedAmount);
+        
+        const updatedQuantity = existingQuantity.add(newQuantity);
+        const updatedInvestedAmount = existingInvestedAmount.add(newInvestedAmount);
+        const updatedAveragePrice = updatedInvestedAmount.div(updatedQuantity);
+        
+        investment = await tx.investment.update({
+          where: { id: investment.id },
+          data: {
+            quantity: updatedQuantity,
+            investedAmount: updatedInvestedAmount,
+            averagePrice: updatedAveragePrice,
+            currentPrice: currentPrice || investment.currentPrice
+          }
+        });
+      } else {
+        investment = await tx.investment.create({
+          data: {
+            userId,
+            symbol,
+            type,
+            name,
+            quantity: newQuantity,
+            averagePrice: newPrice,
+            investedAmount: newInvestedAmount,
+            currentPrice: currentPrice || newPrice,
+            currency: currency || 'INR',
+            notes
+          }
+        });
+      }
+
+      await tx.investmentTransaction.create({
+        data: {
+          userId,
+          investmentId: investment.id,
+          type: 'BUY',
+          quantity: newQuantity,
+          price: newPrice,
+          totalAmount: newInvestedAmount,
+        }
+      });
+
+      return investment;
     });
   }
 
@@ -110,51 +216,86 @@ export class PortfolioService {
     return { message: 'Investment deleted successfully' };
   }
 
-  async sellInvestment(userId: string, data: { symbol: string, quantity: number, currentPrice: number }) {
-    const { symbol, quantity, currentPrice } = data;
+  async sellInvestment(userId: string, data: { symbol: string, quantity: number, currentPrice: number, executionPrice?: number }) {
+    const { symbol, quantity, currentPrice, executionPrice } = data;
+    const sellPrice = executionPrice !== undefined ? executionPrice : currentPrice;
     
+    if (quantity === undefined || Number(quantity) <= 0) {
+      throw new AppError(400, 'INVALID_QUANTITY', 'Quantity must be greater than zero');
+    }
+    if (sellPrice === undefined || Number(sellPrice) < 0) {
+      throw new AppError(400, 'INVALID_PRICE', 'Execution price cannot be negative');
+    }
+
     return prisma.$transaction(async (tx) => {
-      const investments = await tx.investment.findMany({
+      const investment = await tx.investment.findFirst({
         where: { userId, symbol },
-        orderBy: { createdAt: 'asc' }
       });
 
-      let totalOwned = new Decimal(0);
-      for (const inv of investments) {
-        totalOwned = totalOwned.add(inv.quantity);
+      if (!investment) {
+        throw new AppError(404, 'INVESTMENT_NOT_FOUND', `You don't own ${symbol}`);
       }
 
-      if (totalOwned.lessThan(quantity)) {
+      const totalOwned = new Decimal(investment.quantity);
+      const qtyToSell = new Decimal(quantity);
+
+      if (totalOwned.lessThan(qtyToSell)) {
         throw new AppError(400, 'INSUFFICIENT_SHARES', `You only own ${totalOwned.toNumber()} shares of ${symbol}`);
       }
 
-      let remainingToSell = new Decimal(quantity);
-
-      for (const inv of investments) {
-        if (remainingToSell.lte(0)) break;
-
-        const invQty = new Decimal(inv.quantity);
-        if (invQty.lte(remainingToSell)) {
-          await tx.investment.delete({ where: { id: inv.id } });
-          remainingToSell = remainingToSell.sub(invQty);
-        } else {
-          const newQty = invQty.sub(remainingToSell);
-          const averagePrice = new Decimal(inv.averagePrice);
-          const newInvestedAmount = newQty.mul(averagePrice);
-          
-          await tx.investment.update({
-            where: { id: inv.id },
-            data: {
-              quantity: newQty,
-              investedAmount: newInvestedAmount,
-              currentPrice: currentPrice
-            }
-          });
-          remainingToSell = new Decimal(0);
+      const remainingQty = totalOwned.sub(qtyToSell);
+      const sPrice = new Decimal(sellPrice);
+      const avgPrice = new Decimal(investment.averagePrice);
+      const newInvestedAmount = remainingQty.mul(avgPrice);
+      
+      await tx.investment.update({
+        where: { id: investment.id },
+        data: {
+          quantity: remainingQty,
+          investedAmount: remainingQty.lte(0) ? 0 : newInvestedAmount,
+          currentPrice: currentPrice
         }
-      }
+      });
+
+      const totalAmountSold = qtyToSell.mul(sPrice);
+
+      await tx.investmentTransaction.create({
+        data: {
+          userId,
+          investmentId: investment.id,
+          type: 'SELL',
+          quantity: qtyToSell,
+          price: sPrice,
+          totalAmount: totalAmountSold,
+        }
+      });
+
+      await tx.income.create({
+        data: {
+          userId,
+          amount: totalAmountSold,
+          source: `Investment Return: ${symbol}`,
+          date: new Date(),
+          notes: `Sold ${qtyToSell.toNumber()} shares of ${symbol} at ₹${sPrice.toNumber()}`
+        }
+      });
 
       return { message: `Successfully sold ${quantity} shares of ${symbol}` };
+    });
+  }
+
+  async getTransactions(userId: string, symbol?: string) {
+    return prisma.investmentTransaction.findMany({
+      where: {
+        userId,
+        ...(symbol ? { investment: { symbol } } : {})
+      },
+      orderBy: { date: 'desc' },
+      include: {
+        investment: {
+          select: { symbol: true, name: true, type: true }
+        }
+      }
     });
   }
 }

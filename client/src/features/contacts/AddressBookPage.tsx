@@ -147,14 +147,17 @@ function ContactsTab() {
 
         setSyncProgress({ current: 0, total: validConnections.length });
         let imported = 0;
+        const CHUNK_SIZE = 100;
 
-        for (const person of validConnections) {
-          const name = person.names?.[0]?.displayName;
-          const email = person.emailAddresses?.[0]?.value || null;
-          const phone = person.phoneNumbers?.[0]?.value || null;
+        for (let i = 0; i < validConnections.length; i += CHUNK_SIZE) {
+          const chunk = validConnections.slice(i, i + CHUNK_SIZE).map(person => ({
+            name: person.names?.[0]?.displayName,
+            email: person.emailAddresses?.[0]?.value || null,
+            phone: person.phoneNumbers?.[0]?.value || null,
+          }));
           
-          await contactsApi.create({ name, email, phone });
-          imported++;
+          await contactsApi.bulkCreate(chunk);
+          imported += chunk.length;
           setSyncProgress(prev => ({ ...prev, current: imported }));
         }
         

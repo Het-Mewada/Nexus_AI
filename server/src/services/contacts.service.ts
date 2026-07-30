@@ -43,6 +43,19 @@ export class ContactsService {
     });
   }
 
+  async bulkCreateContacts(userId: string, data: any[]) {
+    const contactsData = data.map(contact => ({
+      ...contact,
+      userId,
+    }));
+
+    const result = await prisma.contact.createMany({
+      data: contactsData,
+    });
+
+    return { count: result.count };
+  }
+
   async updateContact(userId: string, id: string, data: any) {
     const contact = await this.getContact(userId, id);
     return prisma.contact.update({

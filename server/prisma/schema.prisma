@@ -307,9 +307,27 @@ model Investment {
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions InvestmentTransaction[]
 
   @@index([userId, type])
   @@map("investments")
+}
+
+model InvestmentTransaction {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  investmentId    String    @map("investment_id")
+  type            String    // BUY, SELL
+  quantity        Decimal   @db.Decimal(18, 8)
+  price           Decimal   @db.Decimal(12, 2)
+  totalAmount     Decimal   @map("total_amount") @db.Decimal(12, 2)
+  date            DateTime  @default(now())
+
+  investment      Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, investmentId])
+  @@index([userId, date(sort: Desc)])
+  @@map("investment_transactions")
 }
 
 model Loan {

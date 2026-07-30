@@ -12,7 +12,7 @@ export const listAddresses = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, addresses, 'Addresses retrieved successfully');
   } catch (error: any) {
     logger.error('Failed to get addresses', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to get addresses' } });
+    throw error;
   }
 };
 
@@ -31,7 +31,7 @@ export const createAddress = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, address, 'Address created successfully', 201);
   } catch (error: any) {
     logger.error('Failed to create address', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to create address' } });
+    throw error;
   }
 };
 

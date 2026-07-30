@@ -10,16 +10,21 @@ export class MarketService {
       const searchQuery = query.includes('.') ? query : `${query}.NS`;
       const results = await yahooFinance.search(searchQuery);
       
+      const isIndianExchange = (q: any) => 
+        q.exchange === 'NSI' || q.exchange === 'BSE' || 
+        q.exchDisp === 'NSE' || q.exchDisp === 'BSE' ||
+        (q.symbol && (q.symbol.endsWith('.NS') || q.symbol.endsWith('.BO')));
+
       // Filter out irrelevant results, keep Equities primarily
-      const filtered = results.quotes.filter(
-        (q: any) => q.isYahooFinance && (q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
+      let filtered = results.quotes.filter(
+        (q: any) => q.isYahooFinance && (q.quoteType === 'EQUITY' || q.quoteType === 'ETF') && isIndianExchange(q)
       );
       
       // If we forced .NS and found nothing, try the original query
       if (filtered.length === 0 && !query.includes('.')) {
         const fallback = await yahooFinance.search(query);
-        return fallback.quotes.filter(
-          (q: any) => q.isYahooFinance && (q.quoteType === 'EQUITY' || q.quoteType === 'ETF')
+        filtered = fallback.quotes.filter(
+          (q: any) => q.isYahooFinance && (q.quoteType === 'EQUITY' || q.quoteType === 'ETF') && isIndianExchange(q)
         );
       }
       
@@ -113,168 +118,93 @@ export class MarketService {
     }
 
     try {
-      const headers: any = {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-      };
-      
-      const initResponse = await fetch('https://www.nseindia.com/', { headers });
-      const cookies = initResponse.headers.get('set-cookie');
-      
-      if (cookies) {
-          headers['Cookie'] = cookies;
-      }
-      
-      const apiResponse = await fetch('https://www.nseindia.com/api/ipo-current-issue', { headers });
-      
-      if (!apiResponse.ok) {
-        throw new Error(`NSE API returned ${apiResponse.status}`);
-      }
-      
-      const data = await apiResponse.json();
-      
-      if (!Array.isArray(data) || data.length === 0) {
-        return this.fallbackIpos(); // Fallback if no active IPOs
-      }
-      
-      const gmpList = await this.fetchGmpList();
-
-      const ipos = data.map((item: any, i: number) => {
-        let size = "N/A";
-        if (item.noOfSharesOffered) {
-          const shares = parseInt(item.noOfSharesOffered);
-          if (!isNaN(shares)) {
-            size = shares >= 10000000 ? `${(shares/10000000).toFixed(2)} Cr Shares` : `${shares.toLocaleString()} Shares`;
-          }
-        }
-        
-        const name = item.companyName || item.symbol;
-        
-        // Match with GMP list
-        const nseName = name.toLowerCase();
-        const gmpMatch = gmpList.find((g: any) => {
-            const gName = g.name.toLowerCase().replace(/ sme$/, '').replace(/ ltd$/, '').replace(/ limited$/, '');
-            return nseName.includes(gName) || gName.includes(nseName.split(' ')[0]);
-        });
-        
-        let priceStr = "TBA";
-        if (gmpMatch) {
-            const cleanPrice = gmpMatch.price.replace('₹', '');
-            priceStr = `${cleanPrice} (GMP: ${gmpMatch.gmp})`;
-        }
-        
-        return {
-          id: `ipo-${item.symbol || i}`,
-          name: name,
-          date: `${item.issueStartDate} to ${item.issueEndDate}`,
-          size: size,
-          price: priceStr,
-          status: item.status === "Active" ? "Live" : "Upcoming",
-          links: [
-            { title: 'View on NSE', url: `https://www.nseindia.com/market-data/issue-information?symbol=${encodeURIComponent(item.symbol)}&series=${encodeURIComponent(item.series)}&type=Active` },
-            { title: 'Search Chittorgarh', url: `https://www.google.com/search?q=${encodeURIComponent(name + ' IPO Chittorgarh')}` },
-            { title: 'Google News', url: `https://news.google.com/search?q=${encodeURIComponent(name + ' IPO')}` }
-          ]
-        };
-      });
-      
-      const realIpos = ipos.length > 0 ? ipos : [];
-      // Also grab the dynamically dated "Closed" fallback IPOs so the UI has past data
-      const fallbacks = await this.fallbackIpos(gmpList);
-      const pastIpos = fallbacks.filter(i => i.status === 'Closed' || i.status === 'Upcoming');
-      
-      const merged = [...realIpos, ...pastIpos];
-      const result = merged.length > 0 ? merged : fallbacks;
-      this.ipoCache = { data: result, expiresAt: Date.now() + 60 * 60 * 1000 }; // 1 hour cache
-      return result;
-    } catch(err) {
-      console.error('IPO Scrape Error:', err);
-      const result = await this.fallbackIpos();
-      this.ipoCache = { data: result, expiresAt: Date.now() + 60 * 60 * 1000 };
-      return result;
-    }
-  }
-  
-  private async fetchGmpList() {
-    try {
-        const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
-        const res = await fetch('https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/', { headers });
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        const list: any[] = [];
-        $('figure.wp-block-table table').first().find('tbody tr').each((j, row) => {
-            const tds = $(row).find('td');
-            if (tds.length >= 4) {
-                const name = $(tds[0]).text().trim();
-                if (name && name !== 'IPO Name') {
-                    list.push({ name, price: $(tds[3]).text().trim(), gmp: $(tds[1]).text().trim() });
-                }
-            }
-        });
-        return list;
-    } catch(e) {
-        console.error('Failed to fetch GMP list', e);
-        return [];
-    }
-  }
-
-  private async fetchPerformanceList() {
-    try {
-        const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
-        const res = await fetch('https://ipowatch.in/ipo-performance/', { headers });
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        const list: any[] = [];
-        
-        $('table').each((i, table) => {
-             if (i === 4 || i === 5) {
-                 $(table).find('tr').each((j, tr) => {
-                     if (j > 0) {
-                         const tds = $(tr).find('td');
-                         if (tds.length >= 7) {
-                             const name = $(tds[0]).text().trim();
-                             const issuePrice = $(tds[2]).text().trim();
-                             const size = $(tds[3]).text().trim();
-                             const listingDate = $(tds[5]).text().trim();
-                             const listingPrice = $(tds[6]).text().trim();
-                             if (name && name !== 'Company') {
-                                 list.push({ name, issuePrice, size, listingDate, listingPrice });
-                             }
-                         }
-                     }
-                 });
-             }
-        });
-        return list;
-    } catch(e) {
-        console.error('Failed to fetch Performance list', e);
-        return [];
-    }
-  }
-
-  private async fallbackIpos(gmpList: any[] = []) {
-    try {
       const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+      const res = await fetch('https://ipowatch.in/ipo-grey-market-premium-latest-ipo-gmp/', { headers });
+      const html = await res.text();
+      const $ = cheerio.load(html);
+      
       const ipos: any[] = [];
       
-      // Fetch Upcoming
-      try {
-          const res = await fetch('https://ipowatch.in/upcoming-ipo-calendar-ipo-list/', { headers });
-          const html = await res.text();
-          const $ = cheerio.load(html);
-          $('figure.wp-block-table table').first().find('tbody tr').each((j, row) => {
+      const sizeMap = await this.fetchSizeMap();
+      
+      // Table 0: Upcoming & Active IPOs
+      $('table').eq(0).find('tr').each((j, row) => {
+          if (j > 0) {
               const tds = $(row).find('td');
-              if (tds.length >= 4) {
+              if (tds.length >= 8) {
                   const name = $(tds[0]).text().trim();
-                  if (name && name !== 'Company Name') {
-                      ipos.push({ 
-                          id: `upcoming-${j}`, 
-                          name, 
-                          date: $(tds[1]).text().trim(), 
-                          size: $(tds[3]).text().trim(), 
-                          price: "TBA", 
-                          status: "Upcoming",
+                  const gmp = $(tds[1]).text().trim();
+                  const priceBand = $(tds[3]).text().trim();
+                  const estListing = $(tds[4]).text().trim();
+                  let date = $(tds[5]).text().trim();
+                  const ipoType = $(tds[6]).text().trim();
+                  const status = $(tds[7]).text().trim();
+                  
+                  // Fix date: "30-3 August" -> "30 Jul - 3 Aug"
+                  const dateMatch = date.match(/^(\d+)-(\d+)\s+([A-Za-z]+)$/);
+                  if (dateMatch) {
+                      const d1 = parseInt(dateMatch[1]);
+                      const d2 = parseInt(dateMatch[2]);
+                      const m2 = dateMatch[3];
+                      if (d1 > d2) {
+                          const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                          const idx = months.findIndex(m => m.toLowerCase().startsWith(m2.toLowerCase().substring(0,3)));
+                          if (idx !== -1) {
+                              const m1 = months[(idx - 1 + 12) % 12];
+                              date = `${d1} ${m1.substring(0,3)} - ${d2} ${m2.substring(0,3)}`;
+                          }
+                      }
+                  }
+                  
+                  if (name && name !== 'IPO Name') {
+                      let displayStatus = "Upcoming";
+                      const lowerStatus = status.toLowerCase();
+                      if (lowerStatus.includes('open') || lowerStatus.includes('active') || lowerStatus.includes('close')) {
+                          displayStatus = "Live";
+                      }
+                      
+                      let mappedSize = sizeMap[name.toLowerCase()]?.size || "N/A";
+                      let mappedSub = sizeMap[name.toLowerCase()]?.sub || "N/A";
+                      
+                      if (mappedSize === "N/A" || mappedSub === "N/A") {
+                          for (const key of Object.keys(sizeMap)) {
+                              if (key.includes(name.toLowerCase()) || name.toLowerCase().includes(key)) {
+                                  if (mappedSize === "N/A") mappedSize = sizeMap[key].size || "N/A";
+                                  if (mappedSub === "N/A") mappedSub = sizeMap[key].sub || "N/A";
+                              }
+                          }
+                      }
+                      
+                      let gmpPercent = 0;
+                      const pctMatch = estListing.match(/\(([^%]+)%\)/);
+                      if (pctMatch) {
+                          gmpPercent = parseFloat(pctMatch[1]);
+                      }
+                      
+                      let estRetailProfit = "N/A";
+                      let estHniProfit = "N/A";
+                      if (gmpPercent && !isNaN(gmpPercent)) {
+                          if (ipoType.toUpperCase().includes('SME')) {
+                              estRetailProfit = "N/A (SME)";
+                              estHniProfit = `₹${Math.round(120000 * (gmpPercent/100)).toLocaleString()}`;
+                          } else {
+                              estRetailProfit = `₹${Math.round(15000 * (gmpPercent/100)).toLocaleString()}`;
+                              estHniProfit = `₹${Math.round(210000 * (gmpPercent/100)).toLocaleString()}`;
+                          }
+                      }
+
+                      ipos.push({
+                          id: `upcoming-${j}`,
+                          name,
+                          date,
+                          size: mappedSize,
+                          type: ipoType || "Mainboard",
+                          price: priceBand !== '-' ? `₹${priceBand.replace('₹', '')} (GMP: ${gmp})` : `TBA (GMP: ${gmp})`,
+                          gmpPercent: gmpPercent ? `${gmpPercent.toFixed(2)}%` : null,
+                          estRetailProfit,
+                          estHniProfit,
+                          subscription: mappedSub,
+                          status: displayStatus,
                           links: [
                               { title: 'Search Chittorgarh', url: `https://www.google.com/search?q=${encodeURIComponent(name + ' IPO Chittorgarh')}` },
                               { title: 'Google News', url: `https://news.google.com/search?q=${encodeURIComponent(name + ' IPO')}` }
@@ -282,63 +212,163 @@ export class MarketService {
                       });
                   }
               }
-          });
-      } catch (e) {
-          console.error('Failed to fetch upcoming from IPOWatch', e);
-      }
+          }
+      });
       
-      // Fetch Closed from Performance list (Listed IPOs)
-      try {
-          const perfList = await this.fetchPerformanceList();
-          let count = 0;
-          for (const item of perfList) {
-              if (count < 10) { // Limit to 10
-                  // Calculate gain
-                  const issueNum = parseFloat(item.issuePrice.replace(/[^0-9.]/g, ''));
-                  const listNum = parseFloat(item.listingPrice.replace(/[^0-9.]/g, ''));
-                  let gainStr = "";
+      // Table 1: Recent Listings (Closed IPOs)
+      $('table').eq(1).find('tr').each((j, row) => {
+          if (j > 0) {
+              const tds = $(row).find('td');
+              if (tds.length >= 4) {
+                  const name = $(tds[0]).text().trim();
+                  const issuePrice = $(tds[1]).text().trim();
+                  const gmp = $(tds[2]).text().trim();
+                  const listingPrice = $(tds[3]).text().trim();
                   
-                  if (!isNaN(issueNum) && !isNaN(listNum) && issueNum > 0) {
-                      const gainRs = listNum - issueNum;
-                      const gainPct = ((gainRs / issueNum) * 100).toFixed(1);
-                      const sign = gainRs >= 0 ? "+" : "";
-                      gainStr = ` (Listed at ₹${listNum}, ${sign}₹${gainRs.toFixed(1)} / ${sign}${gainPct}%)`;
-                  } else {
-                      gainStr = ` (Listed at ${item.listingPrice})`;
+                  if (name && name !== 'IPO Name') {
+                      let priceStr = `${issuePrice} -> ${listingPrice}`;
+                      
+                      let mappedSize = sizeMap[name.toLowerCase()]?.size || "N/A";
+                      let mappedSub = sizeMap[name.toLowerCase()]?.sub || "N/A";
+                      if (mappedSize === "N/A" || mappedSub === "N/A") {
+                          for (const key of Object.keys(sizeMap)) {
+                              if (key.includes(name.toLowerCase()) || name.toLowerCase().includes(key)) {
+                                  if (mappedSize === "N/A") mappedSize = sizeMap[key].size || "N/A";
+                                  if (mappedSub === "N/A") mappedSub = sizeMap[key].sub || "N/A";
+                              }
+                          }
+                      }
+                      
+                      const ipoType = name.toUpperCase().includes('SME') ? 'SME' : 'Mainboard';
+                      
+                      let gmpPercent = 0;
+                      const issueNum = parseFloat(issuePrice.replace(/[^0-9.]/g, ''));
+                      const listNum = parseFloat(listingPrice.replace(/[^0-9.]/g, ''));
+                      if (!isNaN(issueNum) && !isNaN(listNum) && issueNum > 0) {
+                          gmpPercent = ((listNum - issueNum) / issueNum) * 100;
+                      }
+                      
+                      let estRetailProfit = "N/A";
+                      let estHniProfit = "N/A";
+                      if (gmpPercent !== 0 && !isNaN(gmpPercent)) {
+                          if (ipoType.toUpperCase().includes('SME')) {
+                              estRetailProfit = "N/A (SME)";
+                              estHniProfit = `₹${Math.round(120000 * (gmpPercent/100)).toLocaleString()}`;
+                          } else {
+                              estRetailProfit = `₹${Math.round(15000 * (gmpPercent/100)).toLocaleString()}`;
+                              estHniProfit = `₹${Math.round(210000 * (gmpPercent/100)).toLocaleString()}`;
+                          }
+                      }
+                      
+                      ipos.push({
+                          id: `closed-${j}`,
+                          name,
+                          date: `Recently Listed`,
+                          size: mappedSize,
+                          type: ipoType,
+                          price: priceStr,
+                          gmpPercent: gmpPercent ? `${gmpPercent.toFixed(2)}%` : null,
+                          estRetailProfit,
+                          estHniProfit,
+                          subscription: mappedSub,
+                          status: "Closed",
+                          links: [
+                              { title: 'Search Chittorgarh', url: `https://www.google.com/search?q=${encodeURIComponent(name + ' IPO Chittorgarh')}` },
+                              { title: 'Google News', url: `https://news.google.com/search?q=${encodeURIComponent(name + ' IPO')}` }
+                          ]
+                      });
                   }
-                  
-                  const cleanIssuePrice = item.issuePrice.replace('₹', '');
-                  
-                  ipos.push({ 
-                      id: `closed-${count}`, 
-                      name: item.name, 
-                      date: `Listed on ${item.listingDate}`, 
-                      size: item.size || "N/A", 
-                      price: `${cleanIssuePrice}${gainStr}`, 
-                      status: "Closed",
-                      links: [
-                          { title: 'Search Chittorgarh', url: `https://www.google.com/search?q=${encodeURIComponent(item.name + ' IPO Chittorgarh')}` },
-                          { title: 'Google News', url: `https://news.google.com/search?q=${encodeURIComponent(item.name + ' IPO')}` }
-                      ]
-                  });
-                  count++;
               }
           }
-      } catch(e) {
-          console.error('Failed to parse Performance list', e);
-      }
-      
-      if (ipos.length > 0) return ipos;
-    } catch (e) {}
+      });
 
-    // Ultimate fallback if all fails
-    const now = new Date();
-    const month = now.toLocaleString('default', { month: 'short' });
-    const year = now.getFullYear();
-    return [
-      { id: "1", name: "Swiggy Ltd (Mock)", date: `${month} ${year}`, size: "11,000 Cr", price: "390", status: "Closed" }
-    ];
+      if (ipos.length > 0) {
+          this.ipoCache = { data: ipos, expiresAt: Date.now() + 60 * 60 * 1000 };
+          return ipos;
+      }
+      throw new Error("No IPOs found on IPOWatch");
+    } catch(err) {
+      console.error('IPO Scrape Error:', err);
+      // Ultimate fallback
+      const now = new Date();
+      const month = now.toLocaleString('default', { month: 'short' });
+      const year = now.getFullYear();
+      return [
+        { id: "1", name: "Mock IPO", date: `${month} ${year}`, size: "1,000 Cr", price: "100", status: "Closed" }
+      ];
+    }
+  }
+
+  private async fetchSizeMap() {
+      try {
+          const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+          const sizeMap: Record<string, {size?: string, sub?: string}> = {};
+          
+          const res = await fetch('https://ipowatch.in/upcoming-ipo-calendar-ipo-list/', { headers });
+          const html = await res.text();
+          let $ = cheerio.load(html);
+          
+          $('table').each((i, table) => {
+            const headersArr = $(table).find('tr').first().find('th, td').map((j, el) => $(el).text().trim()).get();
+            let nameIdx = headersArr.findIndex(h => h.includes('Company') || h.includes('IPO'));
+            let sizeIdx = headersArr.findIndex(h => h.includes('Size'));
+            
+            if (nameIdx !== -1 && sizeIdx !== -1) {
+              $(table).find('tr').each((j, tr) => {
+                if (j > 0) {
+                  const tds = $(tr).find('td');
+                  if (tds.length > Math.max(nameIdx, sizeIdx)) {
+                    const name = $(tds[nameIdx]).text().trim().toLowerCase();
+                    const size = $(tds[sizeIdx]).text().trim();
+                    if (name && size) {
+                        if (!sizeMap[name]) sizeMap[name] = {};
+                        sizeMap[name].size = size;
+                    }
+                  }
+                }
+              });
+            }
+          });
+
+          const res2 = await fetch('https://ipowatch.in/ipo-performance/', { headers });
+          const html2 = await res2.text();
+          $ = cheerio.load(html2);
+          
+          $('table').each((i, table) => {
+             const headersArr = $(table).find('tr').first().find('th, td').map((j, el) => $(el).text().trim()).get();
+             const nameIdx = headersArr.findIndex(h => h.includes('Company'));
+             const sizeIdx = headersArr.findIndex(h => h.includes('Amount') || h.includes('Size'));
+             const subIdx = headersArr.findIndex(h => h.includes('Subscription'));
+             
+             if (nameIdx !== -1) {
+                 $(table).find('tr').each((j, tr) => {
+                     if (j > 0) {
+                         const tds = $(tr).find('td');
+                         const name = $(tds[nameIdx])?.text().trim().toLowerCase();
+                         if (name && name !== 'company') {
+                             if (!sizeMap[name]) sizeMap[name] = {};
+                             
+                             if (sizeIdx !== -1 && tds[sizeIdx]) {
+                                 const size = $(tds[sizeIdx]).text().trim();
+                                 if (size) sizeMap[name].size = size.includes('Cr') ? size : `₹${size} Cr`;
+                             }
+                             if (subIdx !== -1 && tds[subIdx]) {
+                                 const sub = $(tds[subIdx]).text().trim();
+                                 if (sub && sub !== '-') sizeMap[name].sub = sub;
+                             }
+                         }
+                     }
+                 });
+             }
+          });
+
+          return sizeMap;
+      } catch (err) {
+          console.error("Failed to fetch IPO size map", err);
+          return {};
+      }
   }
 }
+
 
 export const marketService = new MarketService();

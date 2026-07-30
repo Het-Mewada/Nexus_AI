@@ -4,6 +4,7 @@ import {
   getContacts,
   getContact,
   createContact,
+  bulkCreateContacts,
   updateContact,
   deleteContact
 } from '../controllers/contacts.controller';
@@ -14,6 +15,7 @@ router.use(authMiddleware);
 
 router.get('/', getContacts);
 router.get('/:id', getContact);
+router.post('/bulk', bulkCreateContacts);
 router.post('/', createContact);
 router.put('/:id', updateContact);
 router.delete('/:id', deleteContact);

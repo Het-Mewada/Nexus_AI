@@ -13,7 +13,7 @@ export const getPortfolioSummary = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, summary);
   } catch (error) {
     logger.error('Failed to get portfolio summary', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch portfolio summary' } });
+    throw error;
   }
 };
 
@@ -21,9 +21,9 @@ export const addInvestment = async (req: AuthRequest, res: Response) => {
   try {
     const investment = await portfolioService.addInvestment(req.user!.id, req.body);
     sendSuccess(res, investment, 'Investment added successfully', 201);
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to add investment', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to add investment' } });
+    res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || 'Failed to add investment' } });
   }
 };
 
@@ -54,7 +54,7 @@ export const getMarketPrice = async (req: AuthRequest, res: Response) => {
     const price = await marketService.getLivePrice(symbol as string);
     sendSuccess(res, { symbol, price });
   } catch (error) {
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch live price' } }); return;
+    throw error; return;
   }
 };
 
@@ -75,7 +75,17 @@ export const searchMarketSymbol = async (req: AuthRequest, res: Response) => {
     const results = await marketService.searchSymbol(query as string);
     sendSuccess(res, results);
   } catch (error) {
-    res.status(500).json({ success: false, error: { message: 'Failed to search symbol' } }); return;
+    throw error; return;
+  }
+};
+
+export const getTransactions = async (req: AuthRequest, res: Response) => {
+  try {
+    const { symbol } = req.query;
+    const transactions = await portfolioService.getTransactions(req.user!.id, symbol as string | undefined);
+    sendSuccess(res, transactions);
+  } catch (error) {
+    throw error; return;
   }
 };
 
@@ -87,4 +97,5 @@ export const investmentController = {
   sellInvestment,
   getMarketPrice,
   searchMarketSymbol,
+  getTransactions,
 };

@@ -334,8 +334,13 @@ export interface IpoItem {
   name: string;
   date: string;
   size: string;
+  type?: string;
   price: string;
   status: 'Upcoming' | 'Live' | 'Closed';
+  gmpPercent?: string | null;
+  estRetailProfit?: string;
+  estHniProfit?: string;
+  subscription?: string;
   links?: { title: string, url: string }[];
 }
 

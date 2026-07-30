@@ -60,7 +60,7 @@ export default function MarketSearchTab() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
-                placeholder="Search stocks by name or ticker (e.g. RELIANCE, AAPL, TCS)" 
+                placeholder="Search stocks (e.g., RELIANCE.NS, TCS.NS)" 
                 className="pl-10 py-6 text-lg rounded-xl border-primary/20 focus-visible:ring-primary/30"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

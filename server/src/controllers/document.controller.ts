@@ -16,7 +16,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, document, 'Document uploaded successfully', 201);
   } catch (error) {
     logger.error('Failed to upload document', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to upload document' } }); return;
+    throw error; return;
   }
 };
 
@@ -26,7 +26,7 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, documents);
   } catch (error) {
     logger.error('Failed to get documents', { error });
-    res.status(500).json({ success: false, error: { message: 'Failed to fetch documents' } }); return;
+    throw error; return;
   }
 };
 
@@ -37,7 +37,7 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     sendSuccess(res, null, 'Document deleted successfully');
   } catch (error: any) {
     logger.error('Failed to delete document', { error });
-    res.status(500).json({ success: false, error: { message: error.message || 'Failed to delete document' } }); return;
+    throw error; return;
   }
 };
 

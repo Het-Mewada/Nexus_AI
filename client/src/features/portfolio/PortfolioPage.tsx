@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useLocalStorage } from "@/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HoldingsTab from "./components/HoldingsTab";
 import MarketSearchTab from "./components/MarketSearchTab";
 import WatchlistTab from "./components/WatchlistTab";
 import IposTab from "./components/IposTab";
+import HistoryTab from "./components/HistoryTab";
 
 export default function PortfolioPage() {
-  const [activeTab, setActiveTab] = useState("holdings");
+  const [activeTab, setActiveTab] = useLocalStorage("portfolioActiveTab", "holdings");
 
   return (
     <div className="space-y-6">
@@ -16,11 +17,12 @@ export default function PortfolioPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[600px] mb-8">
+        <TabsList className="grid w-full grid-cols-5 lg:w-[700px] mb-8">
           <TabsTrigger value="holdings">My Portfolio</TabsTrigger>
           <TabsTrigger value="market">Market</TabsTrigger>
           <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
           <TabsTrigger value="ipos">IPOs</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
         
         <TabsContent value="holdings" className="mt-0">
@@ -37,6 +39,10 @@ export default function PortfolioPage() {
         
         <TabsContent value="ipos" className="mt-0">
           <IposTab />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-0">
+          <HistoryTab />
         </TabsContent>
       </Tabs>
     </div>

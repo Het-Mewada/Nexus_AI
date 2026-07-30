@@ -10,7 +10,7 @@ export class SpendingBehaviorController {
       res.json(result);
     } catch (error: any) {
       logger.error("Error running spending behavior analysis", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 
@@ -20,7 +20,7 @@ export class SpendingBehaviorController {
       res.json(insights);
     } catch (error: any) {
       logger.error("Error fetching spending behavior insights", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 }

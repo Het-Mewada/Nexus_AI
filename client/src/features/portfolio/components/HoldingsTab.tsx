@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, PieChart, LineChart, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,9 +8,12 @@ import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import type { Investment } from "@/types";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import StockDetailModal from "./StockDetailModal";
+import type { MarketQuote } from "@/types";
 
 export default function HoldingsTab() {
   const queryClient = useQueryClient();
+  const [selectedStock, setSelectedStock] = useState<{ quote: MarketQuote, action: "BUY" | "SELL" } | null>(null);
 
   const { data: invResponse, isLoading } = useQuery({
     queryKey: ["investments"],
@@ -42,9 +46,12 @@ export default function HoldingsTab() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary text-primary-foreground border-none shadow-md">
-          <CardContent className="p-6">
-            <p className="text-primary-foreground/80 font-medium text-sm uppercase tracking-wider">Total Portfolio Value</p>
+        <Card className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white border-none shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <PieChart className="h-24 w-24" />
+          </div>
+          <CardContent className="p-6 relative z-10">
+            <p className="text-white/70 font-medium text-sm uppercase tracking-wider">Total Portfolio Value</p>
             <h2 className="text-3xl font-bold mt-1">{formatCurrency(totalCurrentValue)}</h2>
             <div className={`flex items-center gap-1 mt-2 text-sm font-medium ${isPositive ? 'text-emerald-300' : 'text-red-300'}`}>
               {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
@@ -99,14 +106,9 @@ export default function HoldingsTab() {
                         <CardDescription className="text-xs">{inv.type}</CardDescription>
                       </div>
                     </div>
-                    <ConfirmDeleteDialog title="Delete Investment" onConfirm={() => deleteMutation.mutate(inv.id)}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </ConfirmDeleteDialog>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4 grid grid-cols-2 gap-4">
+                <CardContent className="pt-4 pb-0 grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1 font-medium">Live Value</p>
                     <p className="text-lg font-bold">{formatCurrency(currentValue)}</p>
@@ -125,10 +127,41 @@ export default function HoldingsTab() {
                     )}
                   </div>
                 </CardContent>
+                <div className="p-4 pt-4 mt-2 border-t flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => setSelectedStock({ 
+                      quote: { symbol: inv.symbol!, shortName: inv.name, regularMarketPrice: inv.currentPrice ? Number(inv.currentPrice) : undefined } as MarketQuote, 
+                      action: "BUY" 
+                    })}
+                  >
+                    Buy More
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                    onClick={() => setSelectedStock({ 
+                      quote: { symbol: inv.symbol!, shortName: inv.name, regularMarketPrice: inv.currentPrice ? Number(inv.currentPrice) : undefined } as MarketQuote, 
+                      action: "SELL" 
+                    })}
+                  >
+                    Sell
+                  </Button>
+                </div>
               </Card>
             )
           })}
         </div>
+      )}
+      
+      {selectedStock && (
+        <StockDetailModal 
+          isOpen={!!selectedStock} 
+          onClose={() => setSelectedStock(null)} 
+          stock={selectedStock.quote} 
+          defaultAction={selectedStock.action}
+        />
       )}
     </div>
   );

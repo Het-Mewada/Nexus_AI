@@ -16,7 +16,7 @@ export class NegotiationController {
       res.json(conversation);
     } catch (error: any) {
       logger.error("Error starting negotiation", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 }

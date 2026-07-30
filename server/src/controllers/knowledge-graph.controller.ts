@@ -10,7 +10,7 @@ export class KnowledgeGraphController {
       res.json(graph);
     } catch (error: any) {
       logger.error("Error fetching knowledge graph", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 
@@ -21,7 +21,7 @@ export class KnowledgeGraphController {
       res.status(201).json(node);
     } catch (error: any) {
       logger.error("Error adding knowledge graph node", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 
@@ -32,7 +32,7 @@ export class KnowledgeGraphController {
       res.json(result);
     } catch (error: any) {
       logger.error("Error linking knowledge graph nodes", { error: error.message });
-      res.status(500).json({ error: "Internal server error" });
+      throw error;
     }
   }
 }

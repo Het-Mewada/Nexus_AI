@@ -10,6 +10,7 @@ import {
   sellInvestment,
   getMarketPrice,
   searchMarketSymbol,
+  getTransactions,
 } from '../controllers/investment.controller';
 
 const router = Router();
@@ -23,5 +24,6 @@ router.patch('/portfolio/:id', validate(updateInvestmentSchema), updateInvestmen
 router.delete('/portfolio/:id', deleteInvestment);
 router.get('/market/price', getMarketPrice);
 router.get('/market/search', searchMarketSymbol);
+router.get('/portfolio/transactions', getTransactions);
 
 export default router;
