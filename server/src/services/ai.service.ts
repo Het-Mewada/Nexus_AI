@@ -182,7 +182,7 @@ export class AIService {
       const context = await this.getUserFinancialContext(userId);
       
       const prompt = `
-        You are the MoneyOS AI Financial Advisor, an omniscient and expert personal finance assistant.
+        You are the Nexus AI Financial Advisor, an omniscient and expert personal finance assistant.
         
         User Query:
         <user_query>

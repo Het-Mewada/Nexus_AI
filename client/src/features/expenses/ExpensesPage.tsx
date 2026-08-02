@@ -13,10 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { expenseApi, categoryApi } from "@/services/api";
-import { formatCurrency, formatDate, paymentMethods } from "@/lib/utils";
+import { formatCurrency, formatDate, paymentMethods, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Expense, Category } from "@/types";
 
@@ -34,8 +35,11 @@ type ExpenseForm = z.infer<typeof expenseSchema>;
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
   const [search, setSearch] = useLocalStorage("exp_search", "");
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useLocalStorage("exp_sortBy", "date");
@@ -219,10 +223,43 @@ export default function ExpensesPage() {
                     </div>
                     <span className="text-lg font-bold text-rose-500">-{formatCurrency(Number(expense.amount))}</span>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(expense)}><Edit className="h-4 w-4" /></Button>
-                      <ConfirmDeleteDialog title="Delete Expense" onConfirm={() => deleteMutation.mutate(expense.id)}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
-                      </ConfirmDeleteDialog>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8" 
+                        onClick={() => handleEdit(expense)}
+                        disabled={expense.isAutoSynced}
+                        title={expense.isAutoSynced ? "Synced records cannot be edited directly" : "Edit"}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      {expense.isAutoSynced ? (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Cannot delete synced record">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle className="text-destructive">Synced Record</DialogTitle>
+                              <DialogDescription>
+                                This expense was automatically logged by a Bill or Subscription. To delete it, please go to the respective section and undo the payment to ensure accurate tracking.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <DialogClose asChild>
+                                <Button variant="outline">Understood</Button>
+                              </DialogClose>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      ) : (
+                        <ConfirmDeleteDialog title="Delete Expense" onConfirm={() => deleteMutation.mutate(expense.id)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        </ConfirmDeleteDialog>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -249,13 +286,14 @@ export default function ExpensesPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount (₹)</Label>
+                <Label>Amount ({currencySymbol})</Label>
                 <Input type="number" step="0.01" placeholder="0.00" {...register("amount")} />
                 {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+                {!errors.amount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input type="date" {...register("date")} />
+                <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("date")} />
                 {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
               </div>
             </div>

@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { budgetApi, categoryApi } from "@/services/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Budget, Category } from "@/types";
 
@@ -31,8 +32,11 @@ type BudgetForm = z.infer<typeof budgetSchema>;
 
 export default function BudgetPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
+
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
 
   const { data: budgetsResponse, isLoading } = useQuery({
     queryKey: ["budgets"],
@@ -207,9 +211,10 @@ export default function BudgetPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount (₹)</Label>
+                <Label>Amount ({currencySymbol})</Label>
                 <Input type="number" step="0.01" {...register("amount")} />
                 {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+                {!errors.amount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Period</Label>

@@ -221,7 +221,7 @@ export default function AIAdvisorChat() {
           </div>
           <h2 className="text-2xl font-semibold mb-2 text-foreground">No conversations yet</h2>
           <p className="text-muted-foreground max-w-md mb-8">
-            Start a new chat to get personalized financial advice, negotiate bills, or analyze your spending habits with MoneyOS AI.
+            Start a new chat to get personalized financial advice, negotiate bills, or analyze your spending habits with Nexus AI.
           </p>
           <Button size="lg" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
             {createMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Plus className="h-5 w-5 mr-2" />}
@@ -246,7 +246,7 @@ export default function AIAdvisorChat() {
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-500 text-white">
                 <Bot className="h-5 w-5" />
               </div>
-              <p className="text-sm">Hello! I am your MoneyOS AI Financial Advisor. I have full context of your income, expenses, budgets, and investments. How can I help you today?</p>
+              <p className="text-sm">Hello! I am your Nexus AI Financial Advisor. I have full context of your income, expenses, budgets, and investments. How can I help you today?</p>
             </div>
           )}
 

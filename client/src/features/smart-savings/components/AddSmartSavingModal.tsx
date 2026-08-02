@@ -11,6 +11,8 @@ import { categoryApi } from "@/services/api";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCurrency, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface AddSmartSavingModalProps {
   isOpen: boolean;
@@ -28,6 +30,9 @@ export function AddSmartSavingModal({ isOpen, onClose }: AddSmartSavingModalProp
   const [mood, setMood] = useState("");
   const [difficulty, setDifficulty] = useState("");
   const [description, setDescription] = useState("");
+
+  const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹';
 
   const addMutation = useAddSmartSaving();
   
@@ -129,6 +134,7 @@ export function AddSmartSavingModal({ isOpen, onClose }: AddSmartSavingModalProp
                     onChange={e => setExpectedCost(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
                 </div>
                 <div className="pt-4 border-t">
                   <Label>What did you ACTUALLY do?</Label>
@@ -148,6 +154,7 @@ export function AddSmartSavingModal({ isOpen, onClose }: AddSmartSavingModalProp
                     onChange={e => setActualCost(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
                 </div>
 
                 {savedAmount > 0 && (

@@ -58,6 +58,33 @@ export class BillService {
     const existing = await prisma.bill.findFirst({ where: { id, userId, deletedAt: null } });
     if (!existing) throw new AppError(404, 'BILL_NOT_FOUND', 'Bill not found');
 
+    if (data.isPaid === true && existing.isPaid === false) {
+      // Update other fields first, but leave isPaid for markPaid to handle
+      const { isPaid, ...restData } = data;
+      if (Object.keys(restData).length > 0) {
+        await prisma.bill.update({
+          where: { id },
+          data: restData,
+        });
+      }
+      return this.markPaid(id, userId);
+    }
+
+    if (data.isPaid === false && existing.isPaid === true) {
+      // Find the auto-generated expense linked to this bill and delete it
+      const linkedExpense = await prisma.expense.findFirst({
+        where: {
+          userId,
+          merchant: existing.name,
+          notes: `Automatically logged from bill: ${existing.name}`
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      if (linkedExpense) {
+        await prisma.expense.delete({ where: { id: linkedExpense.id } });
+      }
+    }
+
     return prisma.bill.update({
       where: { id },
       data,
@@ -68,6 +95,39 @@ export class BillService {
   async markPaid(id: string, userId: string) {
     const existing = await prisma.bill.findFirst({ where: { id, userId, deletedAt: null } });
     if (!existing) throw new AppError(404, 'BILL_NOT_FOUND', 'Bill not found');
+
+    let categoryId = existing.categoryId;
+    if (!categoryId) {
+      let defaultBillsCategory = await prisma.category.findFirst({
+        where: { userId, name: { equals: 'Bills', mode: 'insensitive' } }
+      });
+      if (!defaultBillsCategory) {
+        defaultBillsCategory = await prisma.category.create({
+          data: {
+            userId,
+            name: 'Bills',
+            color: '#ef4444',
+            icon: 'file-text'
+          }
+        });
+      }
+      categoryId = defaultBillsCategory.id;
+    }
+
+    // Create the expense for this bill payment
+    await prisma.expense.create({
+      data: {
+        userId,
+        amount: existing.amount,
+        categoryId: categoryId,
+        merchant: existing.name,
+        date: new Date(),
+        paymentMethod: 'cash',
+        notes: `Automatically logged from bill: ${existing.name}`,
+        isAutoSynced: true,
+        syncSource: 'bill',
+      }
+    });
 
     if (existing.isRecurring) {
       const originalDay = new Date(existing.dueDate).getDate();
@@ -91,6 +151,46 @@ export class BillService {
       where: { id },
       data: { isPaid: true },
       include: { category: true },
+    });
+  }
+
+  async undoPayment(id: string, userId: string) {
+    const existing = await prisma.bill.findFirst({ where: { id, userId, deletedAt: null } });
+    if (!existing) throw new AppError(404, 'BILL_NOT_FOUND', 'Bill not found');
+
+    if (!existing.isRecurring) {
+      throw new AppError(400, 'NOT_RECURRING', 'Undo is only supported for recurring bills');
+    }
+
+    // 1. Delete the auto-generated expense log
+    const linkedExpense = await prisma.expense.findFirst({
+      where: {
+        userId,
+        merchant: existing.name,
+        isAutoSynced: true,
+        syncSource: 'bill',
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (linkedExpense) {
+      await prisma.expense.delete({ where: { id: linkedExpense.id } });
+    }
+
+    // 2. Rewind the due date by 1 month
+    const originalDay = new Date(existing.dueDate).getDate();
+    const prevDueDate = new Date(existing.dueDate);
+    prevDueDate.setDate(1); // Set to 1st to prevent month skip issues
+    prevDueDate.setMonth(prevDueDate.getMonth() - 1);
+    const daysInPrevMonth = new Date(prevDueDate.getFullYear(), prevDueDate.getMonth() + 1, 0).getDate();
+    prevDueDate.setDate(Math.min(originalDay, daysInPrevMonth));
+
+    return prisma.bill.update({
+      where: { id },
+      data: {
+        dueDate: prevDueDate,
+        isPaid: false
+      },
+      include: { category: true }
     });
   }
 

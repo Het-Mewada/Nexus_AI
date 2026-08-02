@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { familyApi } from "@/services/api";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, currencies } from "@/lib/utils";
 import { toast } from "sonner";
 import type { SharedWallet } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 export default function FamilyPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
   
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [joinGroupOpen, setJoinGroupOpen] = useState(false);
@@ -312,8 +313,9 @@ export default function FamilyPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Amount (₹)</Label>
+              <Label>Amount ({currencySymbol})</Label>
               <Input type="number" step="0.01" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
+              <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
             </div>
             <div className="space-y-2">
               <Label>Description (Optional)</Label>

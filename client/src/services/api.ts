@@ -86,7 +86,7 @@ export const exportApi = {
       const url = window.URL.createObjectURL(new Blob([r.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `moneyos-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.setAttribute("download", `nexus-export-${new Date().toISOString().split("T")[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -122,6 +122,8 @@ export const billApi = {
   list: () => api.get<ApiResponse<Bill[]>>("/bills").then((r) => r.data),
   create: (data: Partial<Bill>) => api.post<ApiResponse<Bill>>("/bills", data).then((r) => r.data),
   update: (id: string, data: Partial<Bill>) => api.patch<ApiResponse<Bill>>(`/bills/${id}`, data).then((r) => r.data),
+  markPaid: (id: string) => api.patch<ApiResponse<Bill>>(`/bills/${id}/paid`).then((r) => r.data),
+  undoPayment: (id: string) => api.post<ApiResponse<Bill>>(`/bills/${id}/undo`).then((r) => r.data),
   delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/bills/${id}`).then((r) => r.data),
 };
 

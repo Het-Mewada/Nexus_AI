@@ -56,7 +56,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const channel = new BroadcastChannel('moneyos-sync');
+const channel = new BroadcastChannel('nexus-sync');
 channel.onmessage = (event) => {
   if (event.data?.type === 'INVALIDATE_QUERIES') {
     queryClient.invalidateQueries();

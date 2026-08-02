@@ -25,6 +25,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (user?.currency) {
+      localStorage.setItem("user_currency", user.currency);
+    } else if (user === null) {
+      localStorage.removeItem("user_currency");
+    }
+  }, [user?.currency, user]);
+
   const syncUser = useCallback(async (currentSession: Session) => {
     try {
       await api.post("/auth/sync", { isNewUser: false }, {

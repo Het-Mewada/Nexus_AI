@@ -11,6 +11,19 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           className
         )}
         ref={ref}
+        onClick={(e) => {
+          if (
+            (type === "date" || type === "time" || type === "datetime-local" || type === "month") &&
+            "showPicker" in HTMLInputElement.prototype
+          ) {
+            try {
+              (e.target as HTMLInputElement).showPicker();
+            } catch (err) {
+              // Ignore errors if picker is already open or browser restricts it
+            }
+          }
+          props.onClick?.(e);
+        }}
         {...props}
       />
     )

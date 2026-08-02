@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { taxApi } from "@/services/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { TaxProfile } from "@/types";
 
@@ -40,6 +41,9 @@ export default function TaxPage() {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<TaxProfile | null>(null);
+
+  const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹';
 
   const { data: taxResponse, isLoading } = useQuery({
     queryKey: ["taxes"],
@@ -236,7 +240,11 @@ export default function TaxPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Tax Profile" : "Create Tax Profile"}</DialogTitle>
-            <DialogDescription>Enter your income and deduction details to estimate tax</DialogDescription>
+            <DialogDescription>
+              Enter your income and deduction details to estimate tax.
+              <br />
+              <span className="font-medium text-emerald-600 dark:text-emerald-400 mt-2 inline-block">Please enter all amounts in {user?.currency || 'INR'} ({currencySymbol})</span>
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">

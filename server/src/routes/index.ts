@@ -122,6 +122,7 @@ router.post("/bills", authMiddleware, validate(createBillSchema), billController
 router.get("/bills/:id", authMiddleware, billController.getById);
 router.patch("/bills/:id", authMiddleware, validate(updateBillSchema), billController.update);
 router.patch("/bills/:id/paid", authMiddleware, billController.markPaid);
+router.post("/bills/:id/undo", authMiddleware, billController.undoPayment);
 router.delete("/bills/:id", authMiddleware, billController.delete);
 
 // ─── Subscriptions ───────────────────────────────

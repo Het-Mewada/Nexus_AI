@@ -13,7 +13,8 @@ import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { goalApi } from "@/services/api";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Goal } from "@/types";
 
@@ -30,8 +31,11 @@ type GoalForm = z.infer<typeof goalSchema>;
 
 export default function GoalsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
+  
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
 
   const { data: goalsResponse, isLoading } = useQuery({
     queryKey: ["goals"],
@@ -192,14 +196,16 @@ export default function GoalsPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Target Amount (₹)</Label>
+                <Label>Target Amount ({currencySymbol})</Label>
                 <Input type="number" step="0.01" {...register("targetAmount")} />
                 {errors.targetAmount && <p className="text-xs text-destructive">{errors.targetAmount.message}</p>}
+                {!errors.targetAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
-                <Label>Current Saved (₹)</Label>
+                <Label>Current Saved ({currencySymbol})</Label>
                 <Input type="number" step="0.01" {...register("currentAmount")} />
                 {errors.currentAmount && <p className="text-xs text-destructive">{errors.currentAmount.message}</p>}
+                {!errors.currentAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
             </div>
 

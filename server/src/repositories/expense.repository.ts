@@ -123,6 +123,17 @@ export class ExpenseRepository {
     return result._sum.amount;
   }
 
+  async sumTotal(userId: string) {
+    const result = await prisma.expense.aggregate({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      _sum: { amount: true },
+    });
+    return result._sum.amount;
+  }
+
   async getCategoryBreakdown(userId: string, startDate: Date, endDate: Date) {
     const expenses = await prisma.expense.findMany({
       where: {

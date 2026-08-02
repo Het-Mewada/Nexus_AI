@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { marketApi, investmentApi } from "@/services/api";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -24,6 +25,9 @@ export default function StockDetailModal({
   defaultAction?: "BUY" | "SELL";
 }) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
+
   const [activeTab, setActiveTab] = useState(defaultAction ? "trade" : "chart");
   const [quantity, setQuantity] = useState("1");
   const [timeRange, setTimeRange] = useState("1y");
@@ -205,12 +209,12 @@ export default function StockDetailModal({
                       tick={{ fill: 'var(--color-foreground)', fontSize: 11 }}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(val) => `₹${val}`}
+                      tickFormatter={(val) => `${currencySymbol}${val}`}
                     />
                     <Tooltip
                       contentStyle={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
-                      formatter={(value: any) => [`₹${Number(value).toFixed(2)}`, 'Price']}
+                      formatter={(value: any) => [`${currencySymbol}${Number(value).toFixed(2)}`, 'Price']}
                     />
                     <Line
                       type="monotone"
@@ -268,7 +272,7 @@ export default function StockDetailModal({
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Price (₹)</Label>
+                    <Label>Price ({currencySymbol})</Label>
                     <Input
                       type="number"
                       min="0.01"
@@ -277,6 +281,7 @@ export default function StockDetailModal({
                       onChange={(e) => setExecutionPrice(e.target.value)}
                       className="text-lg font-bold"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
                   </div>
                 </div>
 

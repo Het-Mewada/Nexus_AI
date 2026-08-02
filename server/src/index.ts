@@ -1,4 +1,4 @@
-import express from "express";
+import express from "express"; 
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -32,7 +32,7 @@ app.get("/api/health", (_req, res) => {
     success: true,
     data: {
       status: "healthy",
-      service: "MoneyOS AI API",
+      service: "Nexus AI API",
       version: "1.0.0",
       timestamp: new Date().toISOString(),
       environment: env.NODE_ENV,
@@ -49,7 +49,7 @@ app.use(errorHandler);
 
 // ─── Start Server ────────────────────────────────
 app.listen(env.PORT, () => {
-  logger.info(`🚀 MoneyOS AI API running on port ${env.PORT}`);
+  logger.info(`🚀 Nexus AI API running on port ${env.PORT}`);
   logger.info(`📊 Environment: ${env.NODE_ENV}`);
   logger.info(`🌐 Client URL: ${env.CLIENT_URL}`);
 

@@ -8,7 +8,7 @@ export class ExportController {
       const csv = await exportService.exportCSV(req.user!.id);
 
       res.setHeader("Content-Type", "text/csv");
-      res.setHeader("Content-Disposition", `attachment; filename=moneyos-export-${new Date().toISOString().split("T")[0]}.csv`);
+      res.setHeader("Content-Disposition", `attachment; filename=nexus-export-${new Date().toISOString().split("T")[0]}.csv`);
       res.send(csv);
     } catch (error) {
       next(error);

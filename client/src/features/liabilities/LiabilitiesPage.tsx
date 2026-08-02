@@ -258,10 +258,14 @@ export default function LiabilitiesPage() {
               <div className="space-y-2">
                 <Label>Principal Amount</Label>
                 <Input type="number" {...loanForm.register("principalAmount", { valueAsNumber: true })} />
+                {loanForm.formState.errors.principalAmount && <p className="text-xs text-destructive">{loanForm.formState.errors.principalAmount.message}</p>}
+                {!loanForm.formState.errors.principalAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Outstanding Amount</Label>
                 <Input type="number" {...loanForm.register("outstandingAmount", { valueAsNumber: true })} />
+                {loanForm.formState.errors.outstandingAmount && <p className="text-xs text-destructive">{loanForm.formState.errors.outstandingAmount.message}</p>}
+                {!loanForm.formState.errors.outstandingAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
             </div>
 
@@ -273,6 +277,8 @@ export default function LiabilitiesPage() {
               <div className="space-y-2">
                 <Label>EMI Amount</Label>
                 <Input type="number" {...loanForm.register("emiAmount", { valueAsNumber: true })} />
+                {loanForm.formState.errors.emiAmount && <p className="text-xs text-destructive">{loanForm.formState.errors.emiAmount.message}</p>}
+                {!loanForm.formState.errors.emiAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Due Day</Label>
@@ -291,7 +297,7 @@ export default function LiabilitiesPage() {
               </div>
               <div className="space-y-2">
                 <Label>Start Date</Label>
-                <Input type="date" {...loanForm.register("startDate")} />
+                <Input type="date" max={new Date().toISOString().split("T")[0]} {...loanForm.register("startDate")} />
               </div>
             </div>
 
@@ -333,10 +339,14 @@ export default function LiabilitiesPage() {
               <div className="space-y-2">
                 <Label>Sum Insured (Cover)</Label>
                 <Input type="number" {...insuranceForm.register("coverageAmount", { valueAsNumber: true })} />
+                {insuranceForm.formState.errors.coverageAmount && <p className="text-xs text-destructive">{insuranceForm.formState.errors.coverageAmount.message}</p>}
+                {!insuranceForm.formState.errors.coverageAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Premium Amount</Label>
                 <Input type="number" {...insuranceForm.register("premiumAmount", { valueAsNumber: true })} />
+                {insuranceForm.formState.errors.premiumAmount && <p className="text-xs text-destructive">{insuranceForm.formState.errors.premiumAmount.message}</p>}
+                {!insuranceForm.formState.errors.premiumAmount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
             </div>
 

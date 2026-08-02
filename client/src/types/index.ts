@@ -10,6 +10,7 @@ export interface User {
   monthlySalary: number | null;
   createdAt: string;
   updatedAt: string;
+  initialBalance: number | null;
   settings?: UserSettings;
 }
 
@@ -41,6 +42,8 @@ export interface Income {
   notes: string | null;
   isRecurring: boolean;
   currency: string;
+  isAutoSynced: boolean;
+  syncSource?: string;
   createdAt: string;
 }
 
@@ -56,6 +59,8 @@ export interface Expense {
   tags: string[];
   receiptUrl: string | null;
   receiptPath: string | null;
+  isAutoSynced: boolean;
+  syncSource?: string;
   createdAt: string;
   category: Category;
 }
@@ -176,6 +181,7 @@ export interface Bill {
   isRecurring: boolean;
   reminderDays: number;
   category?: Category;
+  createdAt: string;
 }
 
 export interface Subscription {

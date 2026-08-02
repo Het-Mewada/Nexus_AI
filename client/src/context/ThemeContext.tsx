@@ -13,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("moneyos-theme") as Theme) || "system";
+      return (localStorage.getItem("nexus-theme") as Theme) || "system";
     }
     return "system";
   });
@@ -47,7 +47,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
-    localStorage.setItem("moneyos-theme", newTheme);
+    localStorage.setItem("nexus-theme", newTheme);
     setThemeState(newTheme);
   };
 

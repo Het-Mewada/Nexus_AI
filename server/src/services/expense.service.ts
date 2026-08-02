@@ -130,6 +130,10 @@ export class ExpenseService {
     const existing = await expenseRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "EXPENSE_NOT_FOUND", "Expense not found");
 
+    if (existing.isAutoSynced) {
+      throw new AppError(400, "SYNCED_RECORD", "This is a synced record. Please delete it from the Bills or Subscriptions section.");
+    }
+
     if (existing.receiptPath) {
       await storageService.deleteReceipt(existing.receiptPath);
     }

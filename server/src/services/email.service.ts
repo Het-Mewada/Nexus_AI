@@ -18,7 +18,7 @@ export class EmailService {
       }
 
       await resend.emails.send({
-        from: "MoneyOS AI <reminders@moneyos.ai>", // Update this to your verified domain
+        from: "Nexus AI <reminders@nexus.ai>", // Update this to your verified domain
         to,
         subject: `Reminder: ${eventTitle} is in ${timeStr}`,
         html: `
@@ -27,7 +27,7 @@ export class EmailService {
             <p>Your event <strong>${eventTitle}</strong> is starting in ${timeStr}!</p>
             <p><strong>Scheduled Time:</strong> ${eventTime.toLocaleString()}</p>
             <br/>
-            <p style="color: #666; font-size: 12px;">This is an automated reminder from your MoneyOS Calendar.</p>
+            <p style="color: #666; font-size: 12px;">This is an automated reminder from your Nexus Calendar.</p>
           </div>
         `
       });
@@ -45,16 +45,16 @@ export class EmailService {
       }
 
       await resend.emails.send({
-        from: "MoneyOS AI <welcome@moneyos.ai>", 
+        from: "Nexus AI <welcome@nexus.ai>", 
         to,
-        subject: `Welcome to MoneyOS AI, ${name}!`,
+        subject: `Welcome to Nexus AI, ${name}!`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Welcome, ${name}!</h2>
             <p>We're excited to help you take control of your finances with AI.</p>
             <p>Log in to your dashboard to set up your first goal, budget, and tracking preferences.</p>
             <br/>
-            <p style="color: #666; font-size: 12px;">This is an automated welcome message from MoneyOS AI.</p>
+            <p style="color: #666; font-size: 12px;">This is an automated welcome message from Nexus AI.</p>
           </div>
         `
       });

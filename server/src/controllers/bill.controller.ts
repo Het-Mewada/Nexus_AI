@@ -45,6 +45,13 @@ export class BillController {
       sendSuccess(res, result, "Bill deleted successfully");
     } catch (error) { next(error); }
   }
+
+  async undoPayment(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const bill = await billService.undoPayment(req.params.id as string, req.user!.id);
+      sendSuccess(res, bill, "Bill payment undone successfully");
+    } catch (error) { next(error); }
+  }
 }
 
 export const billController = new BillController();

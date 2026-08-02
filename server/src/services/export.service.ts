@@ -28,7 +28,7 @@ export class ExportService {
       }),
     ]);
 
-    let csv = "MoneyOS AI — Financial Data Export\n";
+    let csv = "Nexus AI — Financial Data Export\n";
     csv += `Generated: ${new Date().toISOString()}\n\n`;
 
     // Income section

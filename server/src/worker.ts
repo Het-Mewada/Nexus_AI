@@ -6,7 +6,7 @@ import { MarketService } from './services/market.service';
 
 const marketService = new MarketService();
 
-logger.info('Starting MoneyOS AI Background Worker...');
+logger.info('Starting Nexus AI Background Worker...');
 
 const worker = new Worker(
   'portfolioSync',

@@ -85,6 +85,10 @@ export class IncomeService {
     const existing = await incomeRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "INCOME_NOT_FOUND", "Income record not found");
 
+    if (existing.isAutoSynced) {
+      throw new AppError(400, "SYNCED_RECORD", "This is a synced record. Please delete it from the Bills or Subscriptions section.");
+    }
+
     await incomeRepository.softDelete(id, userId);
     return { message: "Income deleted successfully" };
   }

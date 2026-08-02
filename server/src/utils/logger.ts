@@ -12,7 +12,7 @@ const logFormat = winston.format.combine(
 export const logger = winston.createLogger({
   level: env.NODE_ENV === "development" ? "debug" : "info",
   format: logFormat,
-  defaultMeta: { service: "moneyos-api" },
+  defaultMeta: { service: "nexus-api" },
   transports: [
     new winston.transports.Console(),
   ],

@@ -14,7 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { subscriptionApi } from "@/services/api";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Subscription } from "@/types";
 
@@ -31,8 +32,11 @@ type SubForm = z.infer<typeof subSchema>;
 
 export default function SubscriptionsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Subscription | null>(null);
+  
+  const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
 
   const { data: subsResponse, isLoading } = useQuery({
     queryKey: ["subscriptions"],
@@ -219,9 +223,10 @@ export default function SubscriptionsPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount (₹)</Label>
+                <Label>Amount ({currencySymbol})</Label>
                 <Input type="number" step="0.01" {...register("amount")} />
                 {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+                {!errors.amount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
               </div>
               <div className="space-y-2">
                 <Label>Billing Cycle</Label>

@@ -21,6 +21,7 @@ export const updateProfileSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).optional(),
   monthlySalary: z.coerce.number().min(0).optional(),
   avatarUrl: z.string().url().nullable().optional(),
+  initialBalance: z.coerce.number().optional(),
 });
 
 // ─── Income ──────────────────────────────────────

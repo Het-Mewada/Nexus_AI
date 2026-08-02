@@ -7,20 +7,26 @@ export class AnalyticsService {
   async getDashboardSummary(userId: string) {
     const { start, end } = getCurrentMonthRange();
 
-    const [monthlyIncome, monthlyExpenses, recentExpenses, upcomingBills] = await Promise.all([
+    const [monthlyIncome, monthlyExpenses, totalIncome, totalExpenses, recentExpenses, upcomingBills, user] = await Promise.all([
       incomeRepository.sumByDateRange(userId, start, end),
       expenseRepository.sumByDateRange(userId, start, end),
+      incomeRepository.sumTotal(userId),
+      expenseRepository.sumTotal(userId),
       expenseRepository.getRecentTransactions(userId, 10),
       prisma.bill.findMany({
         where: { userId, isPaid: false, deletedAt: null, dueDate: { gte: new Date() } },
         orderBy: { dueDate: 'asc' },
         take: 3
-      })
+      }),
+      prisma.user.findUnique({ where: { id: userId } })
     ]);
 
+    const initialBalance = toNumber(user?.initialBalance || 0);
     const income = toNumber(monthlyIncome);
     const expenses = toNumber(monthlyExpenses);
-    const balance = income - expenses;
+    const allTimeIncome = toNumber(totalIncome);
+    const allTimeExpenses = toNumber(totalExpenses);
+    const balance = initialBalance + allTimeIncome - allTimeExpenses;
     const savings = income > 0 ? ((income - expenses) / income) * 100 : 0;
 
     const categoryBreakdown = await expenseRepository.getCategoryBreakdown(userId, start, end);
@@ -63,12 +69,14 @@ export class AnalyticsService {
   }
 
   async getCashFlowData(userId: string, year: number) {
-    const [incomeMonthly, expenseMonthly] = await Promise.all([
+    const [incomeMonthly, expenseMonthly, user] = await Promise.all([
       incomeRepository.getMonthlyTotals(userId, year),
       expenseRepository.getMonthlyTotals(userId, year),
+      prisma.user.findUnique({ where: { id: userId } })
     ]);
 
-    let runningBalance = 0;
+    const initialBalance = toNumber(user?.initialBalance || 0);
+    let runningBalance = initialBalance;
     const cashFlow = [];
 
     for (let i = 1; i <= 12; i++) {

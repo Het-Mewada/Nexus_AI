@@ -151,6 +151,8 @@ export class SalaryService {
         data: {
           amount: salaryRecord.actualCredited,
           date: salaryRecord.creditedDate,
+          isAutoSynced: true,
+          syncSource: "salary"
         }
       });
     } else {
@@ -161,7 +163,9 @@ export class SalaryService {
           source: sourceName,
           date: salaryRecord.creditedDate,
           notes: "Auto-synced from Salary record",
-          isRecurring: false
+          isRecurring: false,
+          isAutoSynced: true,
+          syncSource: "salary"
         }
       });
     }

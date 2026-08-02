@@ -52,6 +52,7 @@ export default function SalaryPage() {
     mutationFn: (data: Partial<SalaryRecord>) => salaryApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary"] });
+      queryClient.invalidateQueries({ queryKey: ["income"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Salary record saved");
       setIsOpen(false);
@@ -65,6 +66,7 @@ export default function SalaryPage() {
     mutationFn: ({ id, data }: { id: string; data: Partial<SalaryRecord> }) => salaryApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary"] });
+      queryClient.invalidateQueries({ queryKey: ["income"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Salary record updated");
       setIsOpen(false);
@@ -78,6 +80,8 @@ export default function SalaryPage() {
     mutationFn: (id: string) => salaryApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["salary"] });
+      queryClient.invalidateQueries({ queryKey: ["income"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Salary record deleted");
     },
   });
@@ -172,7 +176,7 @@ export default function SalaryPage() {
                   {latestSalary.actualCredited && (
                     <p className="text-sm text-muted-foreground mt-1">
                       Credited: {formatCurrency(Number(latestSalary.actualCredited))}
-                      {latestSalary.isSynced && " (Synced ?)"}
+                      {latestSalary.isSynced && " (Synced)"}
                     </p>
                   )}
                 </div>
@@ -289,6 +293,7 @@ export default function SalaryPage() {
               <Label htmlFor="baseSalary">Base Salary (per month)</Label>
               <Input type="number" id="baseSalary" step="0.01" {...register("baseSalary")} />
               {errors.baseSalary && <p className="text-xs text-destructive">{errors.baseSalary.message}</p>}
+              {!errors.baseSalary && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -308,10 +313,12 @@ export default function SalaryPage() {
               <div className="space-y-2">
                 <Label htmlFor="bonus">Bonus / Allowances</Label>
                 <Input type="number" id="bonus" step="0.01" {...register("bonus")} />
+                <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="otherDeductions">Other Deductions</Label>
                 <Input type="number" id="otherDeductions" step="0.01" {...register("otherDeductions")} />
+                <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
               </div>
             </div>
 
@@ -358,10 +365,11 @@ export default function SalaryPage() {
                 <div className="space-y-2">
                   <Label htmlFor="actualCredited">Actual Received</Label>
                   <Input type="number" id="actualCredited" step="0.01" {...register("actualCredited")} placeholder={expected > 0 ? expected.toString() : ""} />
+                  <p className="text-xs text-muted-foreground mt-1">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="creditedDate">Credited Date</Label>
-                  <Input type="date" id="creditedDate" {...register("creditedDate")} />
+                  <Input type="date" id="creditedDate" max={new Date().toISOString().split("T")[0]} {...register("creditedDate")} />
                 </div>
               </div>
 

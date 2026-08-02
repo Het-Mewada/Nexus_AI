@@ -25,6 +25,7 @@ const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   currency: z.string().min(1, "Currency is required"),
   timezone: z.string().min(1, "Timezone is required"),
+  initialBalance: z.coerce.number().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -38,7 +39,7 @@ export default function SettingsPage() {
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: user?.name || "", currency: user?.currency || "INR", timezone: user?.timezone || "UTC" },
+    defaultValues: { name: user?.name || "", currency: user?.currency || "INR", timezone: user?.timezone || "UTC", initialBalance: user?.initialBalance || undefined },
   });
 
   const { data: settings } = useQuery({
@@ -49,7 +50,14 @@ export default function SettingsPage() {
 
   const updateProfile = useMutation({
     mutationFn: (data: Partial<UserType>) => userApi.updateProfile(data),
-    onSuccess: () => { toast.success("Profile updated"); refreshProfile(); },
+    onSuccess: (updatedUser) => { 
+      toast.success("Profile updated"); 
+      refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      if (updatedUser?.data?.currency !== user?.currency) {
+        queryClient.invalidateQueries(); // Force all pages to refetch converted amounts
+      }
+    },
     onError: () => toast.error("Failed to update profile"),
   });
 
@@ -135,6 +143,14 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                 </div>
+                {user?.initialBalance === null && (
+                  <div className="space-y-2">
+                    <Label>Initial Balance (Set Once)</Label>
+                    <Input type="number" {...register("initialBalance")} placeholder="Your current bank balance" />
+                    <p className="text-xs text-muted-foreground font-medium text-emerald-600 dark:text-emerald-400">Please enter amount in {user?.currency || 'INR'} ({currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹'})</p>
+                    <p className="text-xs text-muted-foreground">This synchronizes your dashboard balance. It can only be set once.</p>
+                  </div>
+                )}
                 <Button type="submit" variant="gradient" disabled={updateProfile.isPending}>
                   {updateProfile.isPending ? "Saving..." : "Save Changes"}
                 </Button>

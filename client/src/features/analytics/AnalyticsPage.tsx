@@ -118,8 +118,8 @@ export default function AnalyticsPage() {
                     <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
-                    <Line yAxisId="left" type="monotone" dataKey="net" name="Net Cash Flow" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line yAxisId="right" type="monotone" dataKey="runningBalance" name="Running Balance" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                    <Line yAxisId="left" type="monotone" dataKey="net" name="Net Cash Flow" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line yAxisId="right" type="monotone" dataKey="runningBalance" name="Running Balance" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

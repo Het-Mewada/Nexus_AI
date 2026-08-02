@@ -20,6 +20,7 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
+  initialBalance Decimal? @map("initial_balance") @db.Decimal(12, 2)
 
   incomes       Income[]
   expenses      Expense[]
@@ -99,6 +100,8 @@ model Income {
   currency        String    @default("INR")
   confidenceScore Decimal?  @map("confidence_score") @db.Decimal(5, 2)
   duplicateId     String?   @map("duplicate_id")
+  isAutoSynced    Boolean   @default(false) @map("is_auto_synced")
+  syncSource      String?   @map("sync_source")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
@@ -125,6 +128,8 @@ model Expense {
   isRecurring     Boolean   @default(false) @map("is_recurring")
   confidenceScore Decimal?  @map("confidence_score") @db.Decimal(5, 2)
   duplicateId     String?   @map("duplicate_id")
+  isAutoSynced    Boolean   @default(false) @map("is_auto_synced")
+  syncSource      String?   @map("sync_source")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")

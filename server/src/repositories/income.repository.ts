@@ -94,6 +94,17 @@ export class IncomeRepository {
     return result._sum.amount;
   }
 
+  async sumTotal(userId: string) {
+    const result = await prisma.income.aggregate({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      _sum: { amount: true },
+    });
+    return result._sum.amount;
+  }
+
   async getMonthlyTotals(userId: string, year: number) {
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year, 11, 31, 23, 59, 59, 999);

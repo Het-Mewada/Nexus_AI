@@ -158,7 +158,7 @@ export class ConversationService {
       return `[Conversation: ${c.title}]\n${msgs}`;
     }).join('\n\n');
 
-    const systemPrompt = `You are the MoneyOS AI Financial Advisor, an expert personal finance assistant with complete knowledge of the user's finances.
+    const systemPrompt = `You are the Nexus AI Financial Advisor, an expert personal finance assistant with complete knowledge of the user's finances.
 The user's name is ${financialContext.userName}. You must remember this.
 
 Here is the user's COMPLETE financial profile:

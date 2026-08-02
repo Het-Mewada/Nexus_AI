@@ -17,7 +17,7 @@ services:
     depends_on:
       - server
     networks:
-      - moneyos_network
+      - nexus_network
     restart: unless-stopped
 
   # ─── Backend API (Node + Express) ──────────────────────
@@ -44,7 +44,7 @@ services:
       redis:
         condition: service_started
     networks:
-      - moneyos_network
+      - nexus_network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
@@ -74,7 +74,7 @@ services:
       - redis
       - server
     networks:
-      - moneyos_network
+      - nexus_network
     restart: unless-stopped
 
   # ─── Redis (BullMQ & Cache) ─────────────────────────────
@@ -84,12 +84,12 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - moneyos_network
+      - nexus_network
     restart: unless-stopped
 
 volumes:
   redis_data:
 
 networks:
-  moneyos_network:
+  nexus_network:
     driver: bridge
