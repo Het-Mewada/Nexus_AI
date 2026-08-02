@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { salaryApi } from "@/services/api";
-import { formatCurrency, getMonthName } from "@/lib/utils";
+import { formatCurrency, getMonthName, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { SalaryRecord } from "@/types";
 
@@ -33,6 +34,8 @@ type SalaryForm = z.infer<typeof salarySchema>;
 
 export default function SalaryPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹';
   const [isOpen, setIsOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<SalaryRecord | null>(null);
   const now = new Date();

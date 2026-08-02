@@ -13,7 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { liabilityApi } from "@/services/api";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, currencies } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Loan, Insurance } from "@/types";
 
@@ -44,6 +45,8 @@ type InsuranceForm = z.infer<typeof insuranceSchema>;
 
 export default function LiabilitiesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const currencySymbol = currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹';
   const [loanOpen, setLoanOpen] = useState(false);
   const [insuranceOpen, setInsuranceOpen] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);

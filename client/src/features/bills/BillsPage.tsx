@@ -53,7 +53,7 @@ function generateBillHistory(bill: Bill) {
   return history;
 }
 
-type BillForm = z.infer<typeof billSchema>;
+type BillForm = z.input<typeof billSchema>;
 
 export default function BillsPage() {
   const queryClient = useQueryClient();
