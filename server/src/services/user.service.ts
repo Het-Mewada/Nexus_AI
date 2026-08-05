@@ -30,7 +30,7 @@ export class UserService {
 
       try {
         const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
-        const exchangeData = await response.json();
+        const exchangeData = await response.json() as { rates: Record<string, number> };
         const rate = exchangeData.rates[newCurrency] / exchangeData.rates[oldCurrency];
 
         if (rate && rate !== 1) {
