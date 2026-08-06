@@ -54,7 +54,7 @@ export default function IposTab() {
         <>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex flex-col gap-4 mb-6">
-              <TabsList className="grid w-full grid-cols-3 h-12">
+              <TabsList className="inline-flex flex-wrap h-auto justify-start">
                 <TabsTrigger value="live" className="text-sm font-semibold">Live</TabsTrigger>
                 <TabsTrigger value="upcoming" className="text-sm font-semibold">Upcoming</TabsTrigger>
                 <TabsTrigger value="closed" className="text-sm font-semibold">Recently Closed</TabsTrigger>

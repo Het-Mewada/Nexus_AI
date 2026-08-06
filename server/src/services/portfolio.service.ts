@@ -115,6 +115,12 @@ export class PortfolioService {
       const newPrice = new Decimal(averagePrice);
       const newInvestedAmount = newQuantity.mul(newPrice);
       
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { initialBalance: true }
+      });
+      const initialBalance = new Decimal(user?.initialBalance || 0);
+      
       const incomes = await tx.income.aggregate({
         where: { userId },
         _sum: { amount: true }
@@ -125,7 +131,7 @@ export class PortfolioService {
       });
       const totalIncome = new Decimal(incomes._sum.amount || 0);
       const totalExpense = new Decimal(expenses._sum.amount || 0);
-      const availableBalance = totalIncome.sub(totalExpense);
+      const availableBalance = totalIncome.add(initialBalance).sub(totalExpense);
       
       if (availableBalance.lessThan(newInvestedAmount)) {
         throw new AppError(400, 'INSUFFICIENT_FUNDS', `Not enough balance. You need ₹${newInvestedAmount.toNumber().toFixed(2)} but have ₹${availableBalance.toNumber().toFixed(2)}`);

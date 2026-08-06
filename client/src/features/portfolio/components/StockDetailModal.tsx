@@ -168,7 +168,7 @@ export default function StockDetailModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="inline-flex flex-wrap h-auto justify-start">
             <TabsTrigger value="chart">Interactive Chart</TabsTrigger>
             <TabsTrigger value="trade">Trade (Simulated)</TabsTrigger>
           </TabsList>

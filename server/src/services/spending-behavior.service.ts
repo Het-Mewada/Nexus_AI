@@ -2,6 +2,7 @@ import { prisma } from '../config/database';
 import { GoogleGenAI } from '@google/genai';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
+import { AppError } from '../middleware/errorHandler';
 
 const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
 
@@ -98,7 +99,10 @@ Return a JSON array of these insights (no markdown blocks, just raw JSON). Examp
       };
     } catch (error: any) {
       logger.error('Error analyzing spending behavior', { userId, message: error.message });
-      throw new Error('Failed to analyze spending behavior');
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.status === 'RESOURCE_EXHAUSTED') {
+        throw new AppError(429, 'RATE_LIMIT_EXCEEDED', 'AI service is currently busy due to high demand. Please try again later.');
+      }
+      throw new AppError(500, 'AI_ANALYSIS_FAILED', 'Failed to analyze spending behavior');
     }
   }
 

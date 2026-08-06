@@ -104,6 +104,37 @@ export class FinancialAgentService {
     const smartSavings = await prisma.smartSaving.findMany({ where: { userId } });
     const totalSmartSaved = smartSavings.reduce((s, ss) => s + Number(ss.moneySaved), 0);
 
+    // Detailed Complete Transaction History
+    const allExpenses = await prisma.expense.findMany({
+      where: { userId, deletedAt: null },
+      include: { category: true },
+      orderBy: { date: 'desc' },
+    });
+    const allIncomes = await prisma.income.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { date: 'desc' },
+    });
+
+    const transactionHistory = {
+      expenses: allExpenses.map(e => ({
+        date: e.date.toISOString().split("T")[0],
+        merchant: e.merchant,
+        amount: Number(e.amount),
+        category: e.category.name,
+        paymentMethod: e.paymentMethod,
+        notes: e.notes || undefined,
+        tags: e.tags?.length ? e.tags : undefined,
+        isRecurring: e.isRecurring
+      })),
+      incomes: allIncomes.map(i => ({
+        date: i.date.toISOString().split("T")[0],
+        source: i.source,
+        amount: Number(i.amount),
+        notes: i.notes || undefined,
+        isRecurring: i.isRecurring
+      }))
+    };
+
     const netWorth = totalInvestments - totalDebt;
     const monthlySalary = user?.monthlySalary ? Number(user.monthlySalary) : 0;
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalSpent) / totalIncome) * 100 : 0;
@@ -131,6 +162,7 @@ export class FinancialAgentService {
       investments: { total: totalInvestments, breakdown: invData },
       loans: { total: totalDebt, monthlyEMI, count: loans.length },
       insurance: insurances.map((i) => ({ provider: i.provider, type: i.type, premium: Number(i.premiumAmount), cover: Number(i.coverageAmount) })),
+      transactionHistory,
     };
   }
 
@@ -161,6 +193,7 @@ USER'S FINANCIAL DATA (${context.month} ${context.year}):
 - Portfolio (Total: ${context.investments.total}): ${JSON.stringify(context.investments.breakdown)}
 - Debt (Total: ${context.loans.total}, Monthly EMI: ${context.loans.monthlyEMI}): ${context.loans.count} loans
 - Insurance: ${JSON.stringify(context.insurance)}
+- Detailed Transaction History (All Time): ${JSON.stringify(context.transactionHistory)}
 
 ANALYSIS CATEGORIES — generate insights for ALL that apply:
 1. ANOMALY: Unusual spending spikes vs last month (category jumped >50%)

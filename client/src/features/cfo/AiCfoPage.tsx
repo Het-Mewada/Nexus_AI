@@ -90,7 +90,7 @@ export default function AiCfoPage() {
       </div>
 
       <Tabs defaultValue="recommendations" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[600px]">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="recommendations">Strategic Recommendations</TabsTrigger>
           <TabsTrigger value="behavior">Spending Behavior</TabsTrigger>
           <TabsTrigger value="negotiation">Negotiation Assistant</TabsTrigger>
@@ -120,17 +120,17 @@ export default function AiCfoPage() {
               </div>
             ) : (
               recommendations?.map((rec: any) => (
-                <Card key={rec.id} className="flex flex-col relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4">
-                    <Badge className={getCategoryColor(rec.category)} variant="secondary">
-                      {rec.category}
-                    </Badge>
-                  </div>
-                  <CardHeader className="pt-8">
-                    <CardTitle className="text-xl leading-tight">{rec.title}</CardTitle>
+                <Card key={rec.id} className="flex flex-col overflow-hidden">
+                  <CardHeader>
+                    <div className="flex justify-center mb-2">
+                      <Badge className={getCategoryColor(rec.category)} variant="secondary">
+                        {rec.category}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-xl leading-tight text-center">{rec.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 space-y-4">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="text-sm text-muted-foreground leading-relaxed text-justify">
                       {rec.description}
                     </p>
                     {rec.impactAmount && Number(rec.impactAmount) > 0 && (
@@ -139,7 +139,7 @@ export default function AiCfoPage() {
                         Estimated Impact: +{Number(rec.impactAmount).toLocaleString()}
                       </div>
                     )}
-                    <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md italic border">
+                    <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md italic border text-justify">
                       <span className="font-semibold block mb-1">AI Reasoning:</span>
                       {rec.reasoning}
                     </div>

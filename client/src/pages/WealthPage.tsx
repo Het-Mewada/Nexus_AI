@@ -97,7 +97,7 @@ export default function WealthPage() {
       </div>
 
       <Tabs defaultValue="portfolio" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-[400px]">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
           <TabsTrigger value="liabilities">Liabilities</TabsTrigger>
           <TabsTrigger value="insurance">Insurance</TabsTrigger>

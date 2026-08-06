@@ -135,7 +135,7 @@ export default function LiabilitiesPage() {
       </div>
 
       <Tabs defaultValue="loans">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="loans">Loans & Debts</TabsTrigger>
           <TabsTrigger value="insurance">Insurance</TabsTrigger>
         </TabsList>

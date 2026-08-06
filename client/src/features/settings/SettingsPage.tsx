@@ -90,7 +90,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full sm:w-[400px] grid-cols-3">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
@@ -143,7 +143,7 @@ export default function SettingsPage() {
                     </Select>
                   </div>
                 </div>
-                {user?.initialBalance === null && (
+                {user?.initialBalance == null && (
                   <div className="space-y-2">
                     <Label>Initial Balance (Set Once)</Label>
                     <Input type="number" {...register("initialBalance")} placeholder="Your current bank balance" />

@@ -110,6 +110,37 @@ export class AIService {
     });
     const sharedWallets = groupMemberships.flatMap(m => m.group.wallets.map(w => ({ name: w.name, balance: Number(w.balance) })));
 
+    // Detailed Complete Transaction History
+    const allExpenses = await prisma.expense.findMany({
+      where: { userId, deletedAt: null },
+      include: { category: true },
+      orderBy: { date: 'desc' },
+    });
+    const allIncomes = await prisma.income.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { date: 'desc' },
+    });
+
+    const transactionHistory = {
+      expenses: allExpenses.map(e => ({
+        date: e.date.toISOString().split("T")[0],
+        merchant: e.merchant,
+        amount: Number(e.amount),
+        category: e.category.name,
+        paymentMethod: e.paymentMethod,
+        notes: e.notes || undefined,
+        tags: e.tags?.length ? e.tags : undefined,
+        isRecurring: e.isRecurring
+      })),
+      incomes: allIncomes.map(i => ({
+        date: i.date.toISOString().split("T")[0],
+        source: i.source,
+        amount: Number(i.amount),
+        notes: i.notes || undefined,
+        isRecurring: i.isRecurring
+      }))
+    };
+
     const netWorth = totalInvestments - totalDebt;
 
     return {
@@ -128,7 +159,8 @@ export class AIService {
       loans: { total: totalDebt, monthlyEMI, breakdown: loanData },
       insurance: insData,
       taxes: taxData,
-      sharedWallets
+      sharedWallets,
+      transactionHistory
     };
   }
 
@@ -153,6 +185,7 @@ export class AIService {
         Insurance: ${JSON.stringify(context.insurance)}
         Tax Profile: ${JSON.stringify(context.taxes)}
         Shared Wallets: ${JSON.stringify(context.sharedWallets)}
+        Detailed Transaction History (All Time): ${JSON.stringify(context.transactionHistory)}
 
         IMPORTANT: ALWAYS format monetary values using the user's currency: ${context.currency}.
 
@@ -205,9 +238,11 @@ export class AIService {
         Insurance Policies: ${JSON.stringify(context.insurance)}
         Tax Profile: ${JSON.stringify(context.taxes)}
         Family/Shared Wallets: ${JSON.stringify(context.sharedWallets)}
+        Detailed Transaction History (All Time): ${JSON.stringify(context.transactionHistory)}
         
         Provide a highly personalized, helpful, friendly, and professional response. 
         You possess knowledge of EVERY aspect of their finances. If they ask about budgets, goals, bills, taxes, or family wallets, use the data above to give precise answers.
+        You HAVE FULL ACCESS to their detailed transaction history (including specific merchants, personal notes, tags, dates, and amounts). If the user asks about specific notes or people, actively search the Detailed Transaction History data to answer. NEVER deny having access to this data.
         IMPORTANT: ALWAYS format monetary values using the user's currency (${context.currency}). Use the correct symbol (e.g., ₹ for INR, € for EUR, $ for USD).
       `;
 

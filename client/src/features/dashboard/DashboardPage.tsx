@@ -310,7 +310,7 @@ export default function DashboardPage() {
             <CardContent>
               {d?.recentTransactions && d.recentTransactions.length > 0 ? (
                 <div className="space-y-3">
-                  {d.recentTransactions.map((tx) => (
+                  {d.recentTransactions.slice(0, 5).map((tx) => (
                     <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
                       <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${tx.category.color}15` }}>
                         <TrendingDown className="h-4 w-4" style={{ color: tx.category.color }} />
@@ -335,7 +335,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Top Spending + Upcoming Bills */}
-        <motion.div variants={item} className="space-y-6">
+        <motion.div variants={item} className="flex flex-col gap-6 h-full">
           {/* Top Spending */}
           <Card>
             <CardHeader>
@@ -361,7 +361,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Upcoming Bills */}
-          <Card>
+          <Card className="flex-1">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Clock className="h-5 w-5 text-primary" />
@@ -371,7 +371,7 @@ export default function DashboardPage() {
             <CardContent>
               {d?.upcomingBills && d.upcomingBills.length > 0 ? (
                 <div className="space-y-3">
-                  {d.upcomingBills.map((bill) => {
+                  {d.upcomingBills.slice(0, 3).map((bill) => {
                     const dueDate = new Date(bill.dueDate);
                     const isOverdue = dueDate < new Date();
                     const daysLeft = Math.ceil((dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));

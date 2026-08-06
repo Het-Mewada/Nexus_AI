@@ -140,8 +140,8 @@ export default function GoalsPage() {
           {goals.map((goal, i) => {
             const progress = Math.min(100, Math.max(0, (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100));
             return (
-              <motion.div key={goal.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
-                <Card className="hover:shadow-md transition-shadow">
+              <motion.div key={goal.id} className="h-full" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
+                <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -163,8 +163,8 @@ export default function GoalsPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="flex items-center justify-between text-sm">
+                  <CardContent className="pt-4 space-y-4 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between text-sm mt-auto">
                       <span className="font-medium">{formatCurrency(Number(goal.currentAmount))}</span>
                       <span className="text-muted-foreground">{formatCurrency(Number(goal.targetAmount))}</span>
                     </div>

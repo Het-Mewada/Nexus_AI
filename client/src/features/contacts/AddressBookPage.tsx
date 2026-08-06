@@ -571,7 +571,7 @@ export default function AddressBookPage() {
       </div>
 
       <Tabs defaultValue="contacts" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
           <TabsTrigger value="addresses">Addresses</TabsTrigger>
         </TabsList>

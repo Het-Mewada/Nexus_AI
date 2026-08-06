@@ -17,7 +17,7 @@ export default function PortfolioPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-[700px] mb-8">
+        <TabsList className="inline-flex flex-wrap h-auto justify-start mb-8">
           <TabsTrigger value="holdings">My Portfolio</TabsTrigger>
           <TabsTrigger value="market">Market</TabsTrigger>
           <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
