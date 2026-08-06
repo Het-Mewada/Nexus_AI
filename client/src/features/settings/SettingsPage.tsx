@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Bell, Palette, Trash2 } from "lucide-react";
+import { Bell, Palette, Trash2, Lock, Fingerprint } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,10 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { resetPassword, registerPasskey } = useAuth();
+  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -77,6 +81,36 @@ export default function SettingsPage() {
     } catch (err) {
       toast.error("Failed to delete account");
       setIsDeleting(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setIsChangingPassword(true);
+    const { error } = await resetPassword(newPassword);
+    setIsChangingPassword(false);
+    
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success("Password changed successfully! All other sessions have been logged out.");
+      setNewPassword("");
+    }
+  };
+
+  const handleRegisterPasskey = async () => {
+    setIsRegisteringPasskey(true);
+    const { error } = await registerPasskey();
+    setIsRegisteringPasskey(false);
+
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success("Passkey registered successfully! You can now use it to log in.");
     }
   };
 
@@ -225,7 +259,48 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Account Tab */}
-        <TabsContent value="account">
+        <TabsContent value="account" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5 text-primary" /> Change Password</CardTitle>
+              <CardDescription>Update your password. This will automatically log out all other devices.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
+                <div className="space-y-2">
+                  <Label>New Password</Label>
+                  <Input 
+                    type="password" 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)} 
+                    placeholder="••••••••" 
+                  />
+                </div>
+                <Button type="submit" disabled={isChangingPassword || !newPassword}>
+                  {isChangingPassword ? "Updating..." : "Update Password"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Fingerprint className="h-5 w-5 text-primary" /> Passkeys (WebAuthn)</CardTitle>
+              <CardDescription>Set up Face ID, Touch ID, or a security key for passwordless login.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border rounded-lg bg-secondary/20">
+                <div>
+                  <h4 className="font-medium">Passwordless Login</h4>
+                  <p className="text-sm text-muted-foreground">Sign in instantly using your device's biometric authentication.</p>
+                </div>
+                <Button onClick={handleRegisterPasskey} disabled={isRegisteringPasskey} variant="outline" className="w-full sm:w-auto">
+                  {isRegisteringPasskey ? "Waiting for device..." : "Set up Face ID / Fingerprint"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-destructive/20 shadow-none">
             <CardHeader>
               <CardTitle className="text-destructive flex items-center gap-2"><Trash2 className="h-5 w-5" /> Danger Zone</CardTitle>

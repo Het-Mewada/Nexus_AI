@@ -99,7 +99,7 @@ export default function App() {
                 <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
                 <Route path="/signup" element={<GuestGuard><SignUpPage /></GuestGuard>} />
                 <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
-                <Route path="/reset-password" element={<GuestGuard><ResetPasswordPage /></GuestGuard>} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedLayout />}>

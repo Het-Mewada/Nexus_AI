@@ -15,6 +15,8 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<{ error: string | null }>;
   resetPassword: (password: string) => Promise<{ error: string | null }>;
   refreshProfile: () => Promise<void>;
+  registerPasskey: () => Promise<{ error: string | null }>;
+  signInWithPasskey: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -129,6 +131,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  const registerPasskey = async () => {
+    try {
+      const { error } = await supabase.auth.registerPasskey();
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (e: any) {
+      return { error: e.message || "Failed to register passkey" };
+    }
+  };
+
+  const signInWithPasskey = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithPasskey();
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (e: any) {
+      return { error: e.message || "Failed to sign in with passkey" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -142,6 +164,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         forgotPassword,
         resetPassword,
         refreshProfile,
+        registerPasskey,
+        signInWithPasskey,
       }}
     >
       {children}

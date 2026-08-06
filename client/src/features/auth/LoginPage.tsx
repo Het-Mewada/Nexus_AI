@@ -4,8 +4,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Fingerprint } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,9 +21,34 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signInWithPasskey } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const [isWebAuthnSupported, setIsWebAuthnSupported] = useState(false);
+
+  useEffect(() => {
+    if (window.PublicKeyCredential) {
+      setIsWebAuthnSupported(true);
+    }
+  }, []);
+
+  const handlePasskeyLogin = async () => {
+    setIsPasskeyLoading(true);
+    const { error } = await signInWithPasskey();
+    setIsPasskeyLoading(false);
+
+    if (error) {
+      // Don't show an error if they just canceled the prompt
+      if (!error.toLowerCase().includes("cancel")) {
+        toast.error(error);
+      }
+      return;
+    }
+
+    toast.success("Welcome back!");
+    navigate("/dashboard");
+  };
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -90,7 +116,40 @@ export default function LoginPage() {
             <p className="text-muted-foreground mt-2">Sign in to your account to continue</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-4">
+            {isWebAuthnSupported && (
+              <>
+                <Button 
+                  onClick={handlePasskeyLogin} 
+                  variant="outline" 
+                  size="lg" 
+                  className="w-full flex items-center justify-center gap-2"
+                  disabled={isPasskeyLoading || isLoading}
+                >
+                  {isPasskeyLoading ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent" />
+                  ) : (
+                    <>
+                      <Fingerprint className="h-5 w-5" />
+                      Sign in with Face ID / Passkey
+                    </>
+                  )}
+                </Button>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -141,6 +200,7 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
