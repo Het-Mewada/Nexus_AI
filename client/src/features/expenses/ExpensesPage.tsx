@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X } from "lucide-react";
+import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { expenseApi, categoryApi } from "@/services/api";
 import { formatCurrency, formatDate, paymentMethods, currencies } from "@/lib/utils";
@@ -24,11 +26,11 @@ import type { Expense, Category } from "@/types";
 const expenseSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   categoryId: z.string().min(1, "Category is required"),
-  merchant: z.string().min(1, "Merchant is required"),
+  merchant: z.string().min(1, "Merchant is required").max(100, "Merchant name is too long"),
   date: z.string().min(1, "Date is required"),
   paymentMethod: z.string().optional(),
-  notes: z.string().optional(),
-  tags: z.string().optional(),
+  notes: z.string().max(500, "Notes are too long").optional(),
+  tags: z.string().max(255, "Tags are too long").optional(),
 });
 
 type ExpenseForm = z.infer<typeof expenseSchema>;
@@ -38,7 +40,7 @@ export default function ExpensesPage() {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
-  
+
   const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
   const [search, setSearch] = useLocalStorage("exp_search", "");
   const [page, setPage] = useState(1);
@@ -46,9 +48,11 @@ export default function ExpensesPage() {
   const [sortOrder, setSortOrder] = useLocalStorage<"asc" | "desc">("exp_sortOrder", "desc");
   const [filterCategory, setFilterCategory] = useLocalStorage("exp_filterCategory", "");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("manual");
+  const [scanFile, setScanFile] = useState<File | null>(null);
   const debouncedSearch = useDebounce(search, 300);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ExpenseForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
     defaultValues: { paymentMethod: "cash" },
   });
@@ -104,6 +108,8 @@ export default function ExpensesPage() {
     setIsOpen(false);
     setEditing(null);
     setReceiptFile(null);
+    setScanFile(null);
+    setActiveTab("manual");
     reset({ amount: 0, categoryId: "", merchant: "", date: "", paymentMethod: "cash", notes: "", tags: "" });
   };
 
@@ -135,6 +141,37 @@ export default function ExpensesPage() {
     } else {
       createMutation.mutate(fd);
     }
+  };
+
+  const scanMutation = useMutation({
+    mutationFn: (formData: FormData) => expenseApi.scanReceipt(formData),
+    onSuccess: (res) => {
+      const data = res.data;
+      if (data.amount) setValue("amount", data.amount);
+      if (data.date) setValue("date", data.date);
+      if (data.merchant) setValue("merchant", data.merchant);
+      if (data.categoryId) setValue("categoryId", data.categoryId);
+      if (data.paymentMethod) setValue("paymentMethod", data.paymentMethod);
+      if (data.tags && data.tags.length > 0) setValue("tags", data.tags.join(", "));
+      if (data.notes) setValue("notes", data.notes);
+
+      setReceiptFile(scanFile);
+      setScanFile(null);
+      setActiveTab("manual");
+      toast.success("✓ Receipt scanned successfully", {
+        description: "We've extracted the expense details. Please review them before adding the expense."
+      });
+    },
+    onError: () => toast.error("Unable to read this receipt", {
+      description: "Please try a clearer image or enter the expense manually."
+    }),
+  });
+
+  const handleScan = () => {
+    if (!scanFile) return;
+    const fd = new FormData();
+    fd.append("receipt", scanFile);
+    scanMutation.mutate(fd);
   };
 
   const expenses = (data?.data || []) as Expense[];
@@ -172,17 +209,43 @@ export default function ExpensesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Sort" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="amount">Amount</SelectItem>
-                <SelectItem value="merchant">Merchant</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon" onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-[130px] justify-between text-sm h-10 px-3 py-2 bg-background border border-input ring-offset-background hover:bg-accent hover:text-accent-foreground font-normal text-left">
+                  <span className="capitalize">{sortBy}</span>
+                  <ArrowUpDown className="h-4 w-4 opacity-50 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-40">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("desc"); }}>Newest first</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("asc"); }}>Oldest first</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Amount</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("desc"); }}>Highest first</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("asc"); }}>Lowest first</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Merchant</DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("asc"); }}>A-Z</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("desc"); }}>Z-A</DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardContent>
       </Card>
@@ -223,17 +286,17 @@ export default function ExpensesPage() {
                     </div>
                     <span className="text-lg font-bold text-rose-500">-{formatCurrency(Number(expense.amount))}</span>
                     <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={() => handleEdit(expense)}
                         disabled={expense.isAutoSynced}
                         title={expense.isAutoSynced ? "Synced records cannot be edited directly" : "Edit"}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      
+
                       {expense.isAutoSynced ? (
                         <Dialog>
                           <DialogTrigger asChild>
@@ -283,82 +346,138 @@ export default function ExpensesPage() {
             <DialogTitle>{editing ? "Edit Expense" : "Add Expense"}</DialogTitle>
             <DialogDescription>{editing ? "Update expense details" : "Record a new expense"}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Amount ({currencySymbol})</Label>
-                <Input type="number" step="0.01" placeholder="0.00" {...register("amount")} />
-                {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
-                {!errors.amount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
-              </div>
-              <div className="space-y-2">
-                <Label>Date</Label>
-                <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("date")} />
-                {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Merchant</Label>
-                <Input placeholder="e.g. Amazon, Swiggy" {...register("merchant")} />
-                {errors.merchant && <p className="text-xs text-destructive">{errors.merchant.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select onValueChange={(v) => setValue("categoryId", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {categories?.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Payment Method</Label>
-              <Select onValueChange={(v) => setValue("paymentMethod", v)} defaultValue="cash">
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {paymentMethods.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Tags (comma separated)</Label>
-              <Input placeholder="e.g. food, weekend, urgent" {...register("tags")} />
-            </div>
-            <div className="space-y-2">
-              <Label>Notes (optional)</Label>
-              <Textarea placeholder="Add notes..." {...register("notes")} />
-            </div>
-            {/* Receipt Upload */}
-            <div className="space-y-2">
-              <Label>Receipt (optional)</Label>
-              {receiptFile ? (
-                <div className="flex items-center gap-2 p-2 border rounded-lg">
-                  <Upload className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm truncate flex-1">{receiptFile.name}</span>
-                  <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReceiptFile(null)}><X className="h-3 w-3" /></Button>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
+            {!editing && (
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                <TabsTrigger value="scan">Scan Receipt</TabsTrigger>
+              </TabsList>
+            )}
+
+            <TabsContent value="manual" className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Amount ({currencySymbol})</Label>
+                    <Input type="number" step="0.01" placeholder="0.00" {...register("amount")} />
+                    {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+                    {!errors.amount && <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("date")} />
+                    {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+                  </div>
                 </div>
-              ) : (
-                <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors" onClick={() => document.getElementById("receipt-input")?.click()}>
-                  <Upload className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Click to upload receipt (JPEG, PNG, PDF — max 10MB)</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Merchant</Label>
+                    <Input placeholder="e.g. Amazon, Swiggy" {...register("merchant")} />
+                    {errors.merchant && <p className="text-xs text-destructive">{errors.merchant.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={watch("categoryId")} onValueChange={(v) => setValue("categoryId", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.categoryId && <p className="text-xs text-destructive">{errors.categoryId.message}</p>}
+                  </div>
                 </div>
-              )}
-              <input id="receipt-input" type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="gradient" disabled={createMutation.isPending || updateMutation.isPending}>
-                {editing ? "Update" : "Add"} Expense
-              </Button>
-            </DialogFooter>
-          </form>
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <Select value={watch("paymentMethod")} onValueChange={(v) => setValue("paymentMethod", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tags (comma separated)</Label>
+                  <Input placeholder="e.g. food, weekend, urgent" {...register("tags")} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Notes (optional)</Label>
+                  <Textarea placeholder="Add notes..." {...register("notes")} />
+                </div>
+                {/* Receipt Upload */}
+                <div className="space-y-2">
+                  <Label>Receipt (optional)</Label>
+                  {receiptFile ? (
+                    <div className="flex items-center gap-2 p-2 border rounded-lg">
+                      <Upload className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm truncate flex-1">{receiptFile.name}</span>
+                      <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setReceiptFile(null)}><X className="h-3 w-3" /></Button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors" onClick={() => document.getElementById("receipt-input")?.click()}>
+                      <Upload className="h-6 w-6 mx-auto mb-1 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Click to upload receipt (JPEG, PNG, PDF — max 10MB)</p>
+                    </div>
+                  )}
+                  <input id="receipt-input" type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
+                  <Button type="submit" variant="gradient" disabled={createMutation.isPending || updateMutation.isPending}>
+                    {editing ? "Update" : "Add"} Expense
+                  </Button>
+                </DialogFooter>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="scan" className="space-y-4">
+              <div className="text-center space-y-4 py-8">
+                <p className="text-sm text-muted-foreground">
+                  Upload a receipt and let AI extract the expense details automatically.
+                </p>
+                <div
+                  className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => document.getElementById("scan-input")?.click()}
+                >
+                  <Upload className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm font-medium">Click to upload receipt</p>
+                  <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, PDF • Max 10MB</p>
+                </div>
+                <input
+                  id="scan-input"
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => setScanFile(e.target.files?.[0] || null)}
+                />
+
+                {scanFile && (
+                  <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50 text-left">
+                    <Upload className="h-4 w-4 text-primary shrink-0" />
+                    <span className="text-sm truncate flex-1 font-medium">{scanFile.name}</span>
+                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setScanFile(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="gradient"
+                  onClick={handleScan}
+                  disabled={!scanFile || scanMutation.isPending}
+                >
+                  {scanMutation.isPending ? "Analyzing receipt..." : "Scan Receipt"}
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

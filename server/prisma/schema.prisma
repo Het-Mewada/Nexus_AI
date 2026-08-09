@@ -21,6 +21,8 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
   initialBalance Decimal? @map("initial_balance") @db.Decimal(12, 2)
+  role          String    @default("USER") // USER, ADMIN
+  status        String    @default("ACTIVE") // ACTIVE, SUSPENDED
 
   incomes       Income[]
   expenses      Expense[]
@@ -62,6 +64,7 @@ model User {
   plugins           Plugin[]
   workflows         Workflow[]
   financialPlans    FinancialPlan[]
+  feedbacks         Feedback[]
 
   @@map("users")
 }
@@ -823,4 +826,33 @@ model Address {
 
   @@index([userId])
   @@map("addresses")
+}
+
+// ─── Feedback & Bug Reporting System ──────────────────────────────────
+
+model Feedback {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  type        String   // BUG, FEATURE_REQUEST, GENERAL, IMPROVEMENT
+  title       String
+  description String   @db.Text
+  status      String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, REJECTED
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  attachments String[] @default([]) // Array of URLs or paths for screenshots
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("feedbacks")
+}
+
+model SystemSetting {
+  id        String   @id @default("system-settings")
+  features  Json     @default("{}") // Store state of features (e.g. { "Finance_Income": "HIDDEN" | "DISABLED" })
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }

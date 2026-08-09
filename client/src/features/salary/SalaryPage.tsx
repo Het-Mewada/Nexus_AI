@@ -27,7 +27,7 @@ const salarySchema = z.object({
   otherDeductions: z.coerce.number().min(0).optional(),
   actualCredited: z.coerce.number().min(0).optional(),
   creditedDate: z.string().optional(),
-  discrepancyReason: z.string().optional(),
+  discrepancyReason: z.string().max(255, "Reason is too long").optional(),
 });
 
 type SalaryForm = z.infer<typeof salarySchema>;

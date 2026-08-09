@@ -1,6 +1,8 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { expenseService } from "../services/expense.service";
+import { aiService } from "../services/ai.service";
+import { prisma } from "../config/database";
 import { sendSuccess, sendCreated, sendPaginated, parsePaginationQuery } from "../utils/response";
 
 export class ExpenseController {
@@ -58,6 +60,21 @@ export class ExpenseController {
     try {
       const result = await expenseService.delete(req.params.id as string, req.user!.id);
       sendSuccess(res, result, "Expense deleted successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async scanReceipt(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        res.status(400).json({ success: false, message: "No receipt file provided" });
+        return;
+      }
+
+      const categories = await prisma.category.findMany();
+      const extractedData = await aiService.scanReceipt(req.file.buffer, req.file.mimetype, categories);
+      sendSuccess(res, extractedData, "Receipt scanned successfully");
     } catch (error) {
       next(error);
     }

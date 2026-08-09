@@ -29,6 +29,15 @@ export const uploadReceipt = multer({
   },
 });
 
+export const uploadAttachments = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB per file
+    files: 3, // Max 3 files
+  },
+});
+
 export function generateFilePath(originalName: string, userId: string): string {
   const ext = path.extname(originalName);
   const uniqueName = `${uuidv4()}${ext}`;

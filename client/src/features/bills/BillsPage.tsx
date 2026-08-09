@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import type { Bill } from "@/types";
 
 const billSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   dueDate: z.string().min(1, "Due date is required"),
   isPaid: z.boolean().optional(),

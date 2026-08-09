@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight,
@@ -43,6 +44,8 @@ function AnimatedNumber({ value, prefix = "" }: { value: number; prefix?: string
 export default function DashboardPage() {
   const { user } = useAuth();
   const year = new Date().getFullYear();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
   const { data: dashboard, isLoading: dashLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -308,28 +311,46 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {d?.recentTransactions && d.recentTransactions.length > 0 ? (
-                <div className="space-y-3">
-                  {d.recentTransactions.slice(0, 5).map((tx) => (
-                    <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
-                      <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${tx.category.color}15` }}>
-                        <TrendingDown className="h-4 w-4" style={{ color: tx.category.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{tx.merchant}</p>
-                        <p className="text-xs text-muted-foreground">{tx.category.name} · {formatDate(tx.date)}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-rose-500">-{formatCurrency(Number(tx.amount))}</span>
+              {(() => {
+                let displayedTransactions = d?.recentTransactions || [];
+                if (searchQuery) {
+                  displayedTransactions = displayedTransactions.filter(
+                    (tx) =>
+                      tx.merchant.toLowerCase().includes(searchQuery) ||
+                      tx.category.name.toLowerCase().includes(searchQuery) ||
+                      tx.amount.toString().includes(searchQuery)
+                  );
+                }
+
+                if (displayedTransactions.length > 0) {
+                  return (
+                    <div className="space-y-3">
+                      {displayedTransactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
+                          <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${tx.category.color}15` }}>
+                            <TrendingDown className="h-4 w-4" style={{ color: tx.category.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{tx.merchant}</p>
+                            <p className="text-xs text-muted-foreground">{tx.category.name} · {formatDate(tx.date)}</p>
+                          </div>
+                          <span className="text-sm font-semibold text-rose-500">-{formatCurrency(Number(tx.amount))}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Receipt className="h-12 w-12 mb-3 opacity-30" />
-                  <p className="text-sm">No transactions yet</p>
-                  <p className="text-xs mt-1">Add your first expense to get started</p>
-                </div>
-              )}
+                  );
+                }
+
+                return (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Receipt className="h-12 w-12 mb-3 opacity-30" />
+                    <p className="text-sm">
+                      {searchQuery ? "No transactions found for your search" : "No transactions yet"}
+                    </p>
+                    {!searchQuery && <p className="text-xs mt-1">Add your first expense to get started</p>}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </motion.div>
