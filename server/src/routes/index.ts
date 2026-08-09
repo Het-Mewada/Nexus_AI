@@ -15,6 +15,8 @@ import { goalController } from "../controllers/goal.controller";
 import { billController } from "../controllers/bill.controller";
 import { subscriptionController } from "../controllers/subscription.controller";
 import { notificationController } from "../controllers/notification.controller";
+import { adminController } from "../controllers/admin.controller";
+import { adminMiddleware } from "../middleware/admin";
 import investmentRoutes from "./investment.routes";
 import liabilityRoutes from "./liability.routes";
 import familyRoutes from "./family.routes";
@@ -46,10 +48,19 @@ import {
   createBillSchema,
   updateBillSchema,
   createSubscriptionSchema,
-  updateSubscriptionSchema,
+  updateSubscriptionSchema
 } from "../validators/schemas";
+import { featureMiddleware } from "../middleware/feature.middleware";
+import { systemController } from "../controllers/system.controller";
 
 const router = Router();
+
+// Apply feature flag check on all routes below
+router.use(featureMiddleware);
+
+// ─── System ──────────────────────────────────────
+router.get("/system/features", systemController.getSettings);
+router.patch("/admin/system/features", authMiddleware, adminMiddleware, systemController.updateSettings);
 
 // ─── Auth ────────────────────────────────────────
 router.post("/auth/sync", authLimiter, authMiddleware, authController.syncUser);
@@ -67,6 +78,7 @@ router.patch("/income/:id", authMiddleware, validate(updateIncomeSchema), income
 router.delete("/income/:id", authMiddleware, incomeController.delete);
 
 // ─── Expenses ────────────────────────────────────
+router.post("/expenses/scan", authMiddleware, uploadReceipt.single("receipt"), expenseController.scanReceipt);
 router.get("/expenses", authMiddleware, validate(expenseQuerySchema, "query"), expenseController.list);
 router.post("/expenses", authMiddleware, uploadReceipt.single("receipt"), expenseController.create);
 router.get("/expenses/:id", authMiddleware, expenseController.getById);
@@ -139,6 +151,13 @@ router.patch("/notifications/:id/read", authMiddleware, notificationController.m
 router.patch("/notifications/read-all", authMiddleware, notificationController.markAllRead);
 router.delete("/notifications/:id", authMiddleware, notificationController.delete);
 
+// ─── Feedback ────────────────────────────────────
+import { feedbackController } from "../controllers/feedback.controller";
+import { uploadAttachments } from "../middleware/upload";
+router.post("/feedback", authMiddleware, uploadAttachments.array("attachments", 3), feedbackController.create);
+router.get("/feedback", authMiddleware, feedbackController.list);
+router.delete("/feedback/:id", authMiddleware, feedbackController.delete);
+
 // ─── Investments & Liabilities ───────────────────
 router.use("/investments", investmentRoutes);
 router.use("/liabilities", liabilityRoutes);
@@ -204,5 +223,12 @@ router.use("/negotiation", negotiationRoutes);
 // ─── Address Book ────────────────────────────────
 router.use("/addresses", addressesRoutes);
 
-export default router;
+// ─── Admin ───────────────────────────────────────
+router.get("/admin/stats", authMiddleware, adminMiddleware, adminController.getStats);
+router.get("/admin/users", authMiddleware, adminMiddleware, adminController.listUsers);
+router.patch("/admin/users/:id/status", authMiddleware, adminMiddleware, adminController.updateUserStatus);
+router.delete("/admin/users/:id", authMiddleware, adminMiddleware, adminController.deleteUser);
+router.get("/admin/feedbacks", authMiddleware, adminMiddleware, adminController.listFeedbacks);
+router.patch("/admin/feedbacks/:id/status", authMiddleware, adminMiddleware, adminController.updateFeedbackStatus);
 
+export default router;

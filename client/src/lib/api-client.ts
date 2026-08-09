@@ -1,5 +1,6 @@
 import axios from "axios";
 import { supabase } from "./supabase";
+import { toast } from "sonner";
 
 const apiUrl = import.meta.env.VITE_API_URL || "";
 
@@ -21,6 +22,11 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (!error.response) {
+      toast.error("Network Error: Please check your internet connection.");
+      return Promise.reject(error);
+    }
+    
     if (error.response?.status === 401) {
       const { error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {

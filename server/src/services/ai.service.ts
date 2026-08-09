@@ -9,10 +9,10 @@ export class AIService {
   public async getUserFinancialContext(userId: string) {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const currency = user?.currency || "USD";
-    
+
     // Incomes
     const incomes = await prisma.income.findMany({
       where: { userId, deletedAt: null, date: { gte: firstDayOfMonth } },
@@ -34,7 +34,7 @@ export class AIService {
     });
 
     // Budgets
-    const budgets = await prisma.budget.findMany({ 
+    const budgets = await prisma.budget.findMany({
       where: { userId },
       include: { category: true }
     });
@@ -76,7 +76,7 @@ export class AIService {
     const investments = await prisma.investment.findMany({ where: { userId } });
     let totalInvestments = 0;
     const invData = investments.map(inv => {
-      const currentVal = (inv.currentPrice && inv.quantity) 
+      const currentVal = (inv.currentPrice && inv.quantity)
         ? Number(inv.currentPrice) * Number(inv.quantity)
         : Number(inv.investedAmount);
       totalInvestments += currentVal;
@@ -94,7 +94,7 @@ export class AIService {
     const insData = insurances.map(i => ({ provider: i.provider, type: i.type, premium: Number(i.premiumAmount), cover: Number(i.coverageAmount) }));
 
     // Tax Profile
-    const currentYear = today.getMonth() < 3 ? `${today.getFullYear()-1}-${today.getFullYear()}` : `${today.getFullYear()}-${today.getFullYear()+1}`;
+    const currentYear = today.getMonth() < 3 ? `${today.getFullYear() - 1}-${today.getFullYear()}` : `${today.getFullYear()}-${today.getFullYear() + 1}`;
     const taxProfile = await prisma.taxProfile.findUnique({ where: { userId_financialYear: { userId, financialYear: currentYear } } });
     const taxData = taxProfile ? {
       year: taxProfile.financialYear,
@@ -213,7 +213,7 @@ export class AIService {
   async chatAdvisor(userId: string, query: string, retries = 2): Promise<{ role: string, content: string }> {
     try {
       const context = await this.getUserFinancialContext(userId);
-      
+
       const prompt = `
         You are the Nexus AI Financial Advisor, an omniscient and expert personal finance assistant.
         
@@ -303,6 +303,60 @@ export class AIService {
     } catch (error) {
       logger.error("AI Generation Error", error);
       throw new Error("Failed to generate AI response");
+    }
+  }
+
+  async scanReceipt(fileBuffer: Buffer, mimeType: string, categories: { id: string, name: string }[]) {
+    try {
+      const categoryNames = categories.map(c => c.name).join(", ");
+      const prompt = `
+        You are an expert AI Receipt Scanner.
+        Extract the following information from this receipt image/document.
+        Return ONLY a JSON object with the exact keys:
+        - amount: The final payable amount (a number). Extract the final total, not the subtotal.
+        - date: The transaction date in YYYY-MM-DD format. Do not use today's date unless the receipt explicitly indicates it.
+        - merchant: The name of the merchant/store. If this is a person-to-person transfer (like Google Pay/UPI to an individual), use the recipient's name (e.g., "Bharati A Mevada") as the merchant.
+        - category: Map to ONE of these categories exactly: ${categoryNames}. If it is a transfer to an individual/relative, strongly consider categorizing it as "Family", "Personal", or "Transfers". If you cannot confidently determine the category, return "Select".
+        - paymentMethod: IMPORTANT: Look for logos, text, or IDs indicating the payment method. If it's Google Pay, GPay, PhonePe, Paytm, PayTM , or shows a "UPI transaction ID", return "upi". If it's a credit/debit card, return "card". If it's a bank transfer, return "netbanking". Use exactly these string values: "cash", "upi", "card", "netbanking". If completely unknown, return null.
+        - tags: A short array of relevant string tags. If it's Google Pay, include "GPay". If it's UPI, include "UPI". Max 2-3 tags.
+        - notes: A concise note. For person-to-person transfers, format it nicely, e.g., "Payment to [Name]". For merchants, a short note about the purchase. If nothing useful, return null.
+        
+        IMPORTANT: NEVER hallucinate information that is not on the receipt. If a field cannot be determined, return null (except category, which should be "Select").
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          prompt,
+          {
+            inlineData: {
+              data: fileBuffer.toString("base64"),
+              mimeType: mimeType,
+            },
+          },
+        ],
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+
+      const text = response.text;
+      if (!text) throw new Error("No response from AI");
+
+      const extracted = JSON.parse(text);
+
+      // Match the exact category ID based on the name Gemini returned
+      let categoryId = "";
+      if (extracted.category && extracted.category !== "Select") {
+        const found = categories.find(c => c.name.toLowerCase() === extracted.category.toLowerCase());
+        if (found) categoryId = found.id;
+      }
+      extracted.categoryId = categoryId;
+
+      return extracted;
+    } catch (error) {
+      logger.error("Error scanning receipt", { error });
+      throw new Error("Failed to scan receipt");
     }
   }
 }

@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { systemApi } from "@/services/api";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Wallet, PieChart,
   Tag, Settings, User, LogOut, Search, Moon, Sun, Monitor,
   Menu, X, ChevronLeft, ChevronDown, ChevronRight, Target, Trophy, Calendar,
-  Repeat, Briefcase, Shield, Calculator, Users, FolderClosed, Bell, Sparkles, PiggyBank, BrainCircuit, Contact
+  Repeat, Briefcase, Shield, Calculator, Users, FolderClosed, Bell, Sparkles, PiggyBank, BrainCircuit, Contact, MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -82,11 +85,48 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const isMobile = useMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [searchQuery, setSearchQuery] = useState("");
-  
+
+  const { data: featureData } = useQuery({
+    queryKey: ["systemFeatures"],
+    queryFn: systemApi.getFeatures,
+    refetchInterval: 10000 // poll every 10s
+  });
+
+  const systemFeatures = featureData?.data?.features || {};
+
+  const adminGroup = user?.role === "ADMIN" ? [{
+    label: "Admin Controls",
+    items: [
+      { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { name: "Users", href: "/admin/users", icon: Users },
+      { name: "Global Feedback", href: "/admin/feedback", icon: MessageSquare },
+      { name: "Feature Flags", href: "/admin/features", icon: Shield },
+    ]
+  }] : [];
+
+  // Filter navigationGroups based on systemFeatures (HIDDEN)
+  const filteredNavGroups = navigationGroups
+    .map(group => {
+      const groupFeatureState = systemFeatures[group.label];
+      // If the group is completely hidden, remove it
+      if (groupFeatureState === "HIDDEN") return null;
+
+      // Filter out items that are completely hidden
+      const visibleItems = group.items.filter(item => {
+        const itemFeatureState = systemFeatures[`${group.label}_${item.name}`];
+        return itemFeatureState !== "HIDDEN";
+      });
+
+      if (visibleItems.length === 0) return null;
+      return { ...group, items: visibleItems };
+    })
+    .filter(Boolean) as typeof navigationGroups;
+
+  const navGroups = [...filteredNavGroups, ...adminGroup];
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {};
-    navigationGroups.forEach(g => {
+    navGroups.forEach(g => {
       initialState[g.label] = true;
     });
     return initialState;
@@ -102,13 +142,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = async () => {
     await signOut();
     navigate("/login");
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/dashboard?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
   };
 
   const themeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
@@ -170,55 +203,89 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
             {/* Navigation */}
             <nav className="flex-1 space-y-6 px-3 py-4 overflow-y-auto overflow-x-hidden scrollbar-none">
-              {navigationGroups.map((group, groupIdx) => (
-                <div key={group.label} className="space-y-1">
-                  {sidebarOpen && (
-                    <div 
-                      className="px-3 flex items-center justify-between cursor-pointer group/header mb-2 mt-4 first:mt-0"
-                      onClick={() => toggleGroup(group.label)}
-                    >
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 group-hover/header:text-foreground transition-colors">
-                        {group.label}
-                      </span>
-                      {expandedGroups[group.label] ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50 group-hover/header:text-foreground transition-colors" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover/header:text-foreground transition-colors" />
-                      )}
-                    </div>
-                  )}
-                  {!sidebarOpen && groupIdx > 0 && (
-                    <div className="h-px bg-sidebar-border/50 mx-4 my-2" />
-                  )}
-                  {(!sidebarOpen || expandedGroups[group.label]) && group.items.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        onClick={() => isMobile && setSidebarOpen(false)}
+              {navGroups.map((group, groupIdx) => {
+                const isGroupDisabled = systemFeatures[group.label] === "DISABLED";
+
+                return (
+                  <div key={group.label} className="space-y-1">
+                    {sidebarOpen && (
+                      <div
                         className={cn(
-                          "flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-200",
-                          sidebarOpen ? "pl-5 pr-3 ml-2" : "px-3 justify-center",
-                          isActive
-                            ? "bg-primary/10 text-primary shadow-sm"
-                            : "text-sidebar-foreground/70 hover:bg-sidebar-border/50 hover:text-sidebar-foreground",
+                          "px-3 flex items-center justify-between cursor-pointer group/header mb-2 mt-4 first:mt-0",
+                          isGroupDisabled ? "opacity-50" : ""
                         )}
-                        title={!sidebarOpen ? item.name : undefined}
+                        onClick={() => {
+                          if (isGroupDisabled) {
+                            toast.error(`The ${group.label} module is currently disabled by the admin.`);
+                            return;
+                          }
+                          toggleGroup(group.label)
+                        }}
                       >
-                        <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
-                        {sidebarOpen && <span className="whitespace-nowrap">{item.name}</span>}
-                        {isActive && sidebarOpen && (
-                          <motion.div
-                            layoutId="sidebar-indicator"
-                            className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
-                          />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 group-hover/header:text-foreground transition-colors">
+                          {group.label}
+                        </span>
+                        {expandedGroups[group.label] ? (
+                          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50 group-hover/header:text-foreground transition-colors" />
+                        ) : (
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover/header:text-foreground transition-colors" />
                         )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+                      </div>
+                    )}
+                    {!sidebarOpen && groupIdx > 0 && (
+                      <div className="h-px bg-sidebar-border/50 mx-4 my-2" />
+                    )}
+                    {(!sidebarOpen || expandedGroups[group.label]) && group.items.map((item) => {
+                      const isActive = location.pathname === item.href;
+                      const itemFeatureState = systemFeatures[`${group.label}_${item.name}`];
+                      const isItemDisabled = isGroupDisabled || itemFeatureState === "DISABLED";
+
+                      const className = cn(
+                        "flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-200",
+                        sidebarOpen ? "pl-5 pr-3 ml-2" : "px-3 justify-center",
+                        isActive
+                          ? "bg-primary/10 text-primary shadow-sm"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-border/50 hover:text-sidebar-foreground",
+                        isItemDisabled && "opacity-50 grayscale hover:bg-transparent cursor-not-allowed text-sidebar-foreground/40 hover:text-sidebar-foreground/40"
+                      );
+
+                      if (isItemDisabled) {
+                        return (
+                          <div
+                            key={item.name}
+                            className={className}
+                            title={!sidebarOpen ? item.name : undefined}
+                            onClick={() => toast.error(`The ${item.name} feature is currently disabled by the admin.`)}
+                          >
+                            <item.icon className="h-5 w-5 shrink-0" />
+                            {sidebarOpen && <span className="whitespace-nowrap">{item.name}</span>}
+                            <Shield className="h-3 w-3 ml-auto opacity-50" />
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => isMobile && setSidebarOpen(false)}
+                          className={className}
+                          title={!sidebarOpen ? item.name : undefined}
+                        >
+                          <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                          {sidebarOpen && <span className="whitespace-nowrap">{item.name}</span>}
+                          {isActive && sidebarOpen && (
+                            <motion.div
+                              layoutId="sidebar-indicator"
+                              className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+                            />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )
+              })}
             </nav>
 
             {/* User section */}
@@ -263,20 +330,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </Button>
           )}
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search transactions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 bg-muted/50 border-none"
-              />
-            </div>
-          </form>
-
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             {/* Theme toggle */}
             <Button variant="ghost" size="icon" onClick={() => setTheme(nextTheme)} className="h-9 w-9">
               <ThemeIcon className="h-4 w-4" />

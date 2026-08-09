@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
-import { AuthGuard, GuestGuard } from "@/components/guards";
+import { AuthGuard, GuestGuard, AdminGuard, FeatureGuard } from "@/components/guards";
 import { DashboardLayout } from "@/app/layouts/DashboardLayout";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -44,6 +44,16 @@ const CalendarPage = lazy(() => import("@/features/calendar/CalendarPage"));
 
 // Phase 5 pages
 const AiCfoPage = lazy(() => import("@/features/cfo/AiCfoPage"));
+const FeedbackPage = lazy(() => import("@/features/feedback/FeedbackPage"));
+
+// Admin pages
+const AdminDashboardPage = lazy(() => import("@/features/admin/AdminDashboardPage"));
+const UserManagementPage = lazy(() => import("@/features/admin/UserManagementPage"));
+const GlobalFeedbackPage = lazy(() => import("@/features/admin/GlobalFeedbackPage"));
+const FeatureFlagsPage = lazy(() => import("@/features/admin/FeatureFlagsPage"));
+
+// Error pages
+const NotFoundPage = lazy(() => import("@/features/error/NotFoundPage"));
 
 // Initialise React Query Client
 const queryClient = new QueryClient({
@@ -75,9 +85,11 @@ const ProtectedLayout = () => {
   return (
     <AuthGuard>
       <DashboardLayout>
-        <Suspense fallback={<PageLoader />}>
-          <Outlet />
-        </Suspense>
+        <FeatureGuard>
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
+        </FeatureGuard>
       </DashboardLayout>
     </AuthGuard>
   );
@@ -128,11 +140,18 @@ export default function App() {
                   <Route path="/notifications" element={<NotificationsPage />} />
 
                   <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/feedback" element={<FeedbackPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  
+                  {/* Admin Routes */}
+                  <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
+                  <Route path="/admin/users" element={<AdminGuard><UserManagementPage /></AdminGuard>} />
+                  <Route path="/admin/feedback" element={<AdminGuard><GlobalFeedbackPage /></AdminGuard>} />
+                  <Route path="/admin/features" element={<AdminGuard><FeatureFlagsPage /></AdminGuard>} />
                 </Route>
 
                 {/* Catch all */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
           </BrowserRouter>

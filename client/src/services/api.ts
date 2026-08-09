@@ -3,7 +3,8 @@ import type {
   Income, Expense, SalaryRecord, Category, DashboardSummary, ChartData, CashFlowData, User, UserSettings, SearchResults, CategoryBreakdownItem,
   Budget, Goal, Bill, Subscription, Investment, Loan, Insurance, Document, TaxProfile, FamilyGroup, SharedWallet, SharedWalletTransaction, Notification,
   Watchlist, MarketQuote, IpoItem,
-  AiConversation, AiInsight, FinancialSimulation, CoachingChallenge, CoachingProgress, DailyTip, WeeklyReview, SimulationResults, Contact, Address
+  AiConversation, AiInsight, FinancialSimulation, CoachingChallenge, CoachingProgress, DailyTip, WeeklyReview, SimulationResults, Contact, Address,
+  Feedback
 } from "@/types";
 
 // ─── User ────────────────────────────────────────
@@ -11,6 +12,34 @@ export const userApi = {
   getProfile: () => api.get<ApiResponse<User>>("/users/me").then((r) => r.data),
   updateProfile: (data: Partial<User>) => api.patch<ApiResponse<User>>("/users/me", data).then((r) => r.data),
   deleteAccount: () => api.delete<ApiResponse<{ message: string }>>("/users/me").then((r) => r.data),
+};
+
+// ─── Admin ───────────────────────────────────────
+export interface AdminStats {
+  users: { total: number; active: number; suspended: number };
+  transactions: { total: number };
+  feedback: { total: number; open: number };
+}
+
+export const adminApi = {
+  getStats: () => api.get<ApiResponse<AdminStats>>("/admin/stats").then((r) => r.data),
+  listUsers: (params?: { page?: number; limit?: number; search?: string }) => 
+    api.get<ApiResponse<{ users: any[]; pagination: any }>>("/admin/users", { params }).then((r) => r.data),
+  updateUserStatus: (id: string, status: "ACTIVE" | "SUSPENDED") => 
+    api.patch<ApiResponse<any>>(`/admin/users/${id}/status`, { status }).then((r) => r.data),
+  deleteUser: (id: string) => 
+    api.delete<ApiResponse<any>>(`/admin/users/${id}`).then((r) => r.data),
+  listFeedbacks: (params?: { page?: number; limit?: number; status?: string }) => 
+    api.get<ApiResponse<{ feedbacks: Feedback[]; pagination: any }>>("/admin/feedbacks", { params }).then((r) => r.data),
+  updateFeedbackStatus: (id: string, status: string) => 
+    api.patch<ApiResponse<any>>(`/admin/feedbacks/${id}/status`, { status }).then((r) => r.data),
+  updateSystemFeatures: (features: Record<string, string>) => 
+    api.patch<ApiResponse<{ features: Record<string, string> }>>(`/admin/system/features`, { features }).then((r) => r.data),
+};
+
+export const systemApi = {
+  getFeatures: () => 
+    api.get<ApiResponse<{ features: Record<string, string> }>>("/system/features").then((r) => r.data),
 };
 
 // ─── Income ──────────────────────────────────────
@@ -28,6 +57,10 @@ export const expenseApi = {
   list: (params?: Record<string, string>) =>
     api.get<ApiResponse<Expense[]>>("/expenses", { params }).then((r) => r.data),
   getById: (id: string) => api.get<ApiResponse<Expense>>(`/expenses/${id}`).then((r) => r.data),
+  scanReceipt: (data: FormData) =>
+    api.post<ApiResponse<any>>("/expenses/scan", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data),
   create: (data: FormData) =>
     api.post<ApiResponse<Expense>>("/expenses", data, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -310,4 +343,14 @@ export const addressesApi = {
   create: (data: Partial<Address>) => api.post<ApiResponse<Address>>("/addresses", data).then((r) => r.data),
   update: (id: string, data: Partial<Address>) => api.put<ApiResponse<Address>>(`/addresses/${id}`, data).then((r) => r.data),
   delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/addresses/${id}`).then((r) => r.data),
+};
+
+// ─── Feedback ────────────────────────────────────
+export const feedbackApi = {
+  list: () => api.get<ApiResponse<Feedback[]>>("/feedback").then((r) => r.data),
+  create: (data: FormData) =>
+    api.post<ApiResponse<Feedback>>("/feedback", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data),
+  delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/feedback/${id}`).then((r) => r.data),
 };

@@ -24,9 +24,9 @@ import type { Income } from "@/types";
 
 const incomeSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
-  source: z.string().min(1, "Source is required"),
+  source: z.string().min(1, "Source is required").max(100, "Source is too long"),
   date: z.string().min(1, "Date is required"),
-  notes: z.string().optional(),
+  notes: z.string().max(500, "Notes are too long").optional(),
   isRecurring: z.boolean().optional(),
   currency: z.string().optional(),
 });

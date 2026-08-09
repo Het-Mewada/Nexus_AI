@@ -318,6 +318,7 @@ export default function AIAdvisorChat() {
             <Button
               type="submit"
               size="icon"
+              aria-label="Send"
               disabled={!input.trim() || sendMutation.isPending || loadingMessages}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-8 w-8"
             >

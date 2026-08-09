@@ -65,11 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('INIT AUTH: checking localStorage', localStorage.getItem('sb-jgyrzomssqnosyotysyn-auth-token') ? 'present' : 'missing');
+      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      console.log('INIT AUTH: currentSession=', !!currentSession, 'error=', error);
       if (currentSession) {
         setSession(currentSession);
         setSupabaseUser(currentSession.user);
         await syncUser(currentSession);
+        console.log('INIT AUTH: syncUser completed, user is now:', user);
       }
       setIsLoading(false);
     };

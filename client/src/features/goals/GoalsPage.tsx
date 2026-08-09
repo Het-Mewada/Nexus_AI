@@ -19,12 +19,15 @@ import { toast } from "sonner";
 import type { Goal } from "@/types";
 
 const goalSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   targetAmount: z.coerce.number().positive("Target amount must be greater than 0"),
   currentAmount: z.coerce.number().min(0, "Current amount cannot be negative"),
   deadline: z.string().optional(),
   color: z.string().optional(),
   icon: z.string().optional(),
+}).refine(data => data.targetAmount > data.currentAmount, {
+  message: "Target amount must be greater than current amount",
+  path: ["targetAmount"]
 });
 
 type GoalForm = z.infer<typeof goalSchema>;

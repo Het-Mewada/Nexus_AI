@@ -20,7 +20,7 @@ import type { Loan, Insurance } from "@/types";
 
 const loanSchema = z.object({
   type: z.string().min(1, "Type is required"),
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   principalAmount: z.coerce.number().positive(),
   outstandingAmount: z.coerce.number().min(0),
   interestRate: z.coerce.number().positive(),
@@ -33,8 +33,8 @@ const loanSchema = z.object({
 
 const insuranceSchema = z.object({
   type: z.string().min(1, "Type is required"),
-  provider: z.string().min(1, "Provider is required"),
-  policyNumber: z.string().min(1, "Policy number is required"),
+  provider: z.string().min(1, "Provider is required").max(100, "Provider name is too long"),
+  policyNumber: z.string().min(1, "Policy number is required").max(50, "Policy number is too long"),
   premiumAmount: z.coerce.number().positive(),
   coverageAmount: z.coerce.number().positive(),
   renewalDate: z.string().min(1),
@@ -304,7 +304,7 @@ export default function LiabilitiesPage() {
               </div>
             </div>
 
-            <DialogFooter><Button type="submit" variant="gradient">Save Loan</Button></DialogFooter>
+            <DialogFooter><Button type="submit" variant="gradient" disabled={loanCreate.isPending || loanUpdate.isPending}>Save Loan</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -358,7 +358,7 @@ export default function LiabilitiesPage() {
               <Input type="date" {...insuranceForm.register("renewalDate")} />
             </div>
 
-            <DialogFooter><Button type="submit" variant="gradient">Save Insurance</Button></DialogFooter>
+            <DialogFooter><Button type="submit" variant="gradient" disabled={insCreate.isPending || insUpdate.isPending}>Save Insurance</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

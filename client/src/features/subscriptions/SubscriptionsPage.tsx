@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import type { Subscription } from "@/types";
 
 const subSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   billingCycle: z.enum(["MONTHLY", "YEARLY"]),
   nextBillingDate: z.string().min(1, "Next billing date is required"),

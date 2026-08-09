@@ -12,6 +12,8 @@ export interface User {
   updatedAt: string;
   initialBalance: number | null;
   settings?: UserSettings;
+  role: "USER" | "ADMIN";
+  status: "ACTIVE" | "SUSPENDED";
 }
 
 export interface UserSettings {
@@ -472,6 +474,19 @@ export interface Address {
   zipCode: string;
   country: string;
   notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Feedback {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  attachments: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -8,6 +8,8 @@ export interface AuthRequest extends Request {
     id: string;
     supabaseId: string;
     email: string;
+    role: string;
+    status: string;
   };
 }
 
@@ -80,10 +82,23 @@ export async function authMiddleware(
       return;
     }
 
+    if (dbUser.status === "SUSPENDED") {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: "ACCOUNT_SUSPENDED",
+          message: "This account has been suspended",
+        },
+      });
+      return;
+    }
+
     req.user = {
       id: dbUser.id,
       supabaseId: dbUser.supabaseId,
       email: dbUser.email,
+      role: dbUser.role,
+      status: dbUser.status,
     };
 
     next();

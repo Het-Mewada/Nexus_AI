@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import type { User as UserType, UserSettings } from "@/types";
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
   currency: z.string().min(1, "Currency is required"),
   timezone: z.string().min(1, "Timezone is required"),
   initialBalance: z.coerce.number().optional(),

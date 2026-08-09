@@ -7,7 +7,9 @@
     "dev": "vite --host",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "playwright test -c tests/playwright.config.ts",
+    "test:watch": "cross-env SLOW_MO=1 playwright test -c tests/playwright.config.ts --headed"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -47,12 +49,15 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/vite": "^4.1.8",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.5.2",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.1.0",
+    "dotenv": "^17.4.2",
     "eslint": "^9.28.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
