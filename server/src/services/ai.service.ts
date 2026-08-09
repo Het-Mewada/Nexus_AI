@@ -144,6 +144,7 @@ export class AIService {
     const netWorth = totalInvestments - totalDebt;
 
     return {
+      currentDate: today.toISOString().split("T")[0],
       month: today.toLocaleString('default', { month: 'long' }),
       year: today.getFullYear(),
       totalIncome,
@@ -169,6 +170,7 @@ export class AIService {
       const context = await this.getUserFinancialContext(userId);
       const prompt = `
         You are a highly intelligent personal finance assistant.
+        Today's Date is: ${context.currentDate}
         Analyze the following comprehensive financial data for the user for ${context.month} ${context.year}:
         
         Income: ${context.totalIncome} ${context.currency}
@@ -222,6 +224,7 @@ export class AIService {
         ${query.replace(/<\/user_query>/g, '')}
         </user_query>
         
+        Today's Date is: ${context.currentDate}
         Here is the user's COMPLETE financial profile for ${context.month} ${context.year}:
         
         Income (MTD): ${context.totalIncome} ${context.currency}
