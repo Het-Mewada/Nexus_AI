@@ -2,12 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { systemApi, adminApi } from "@/services/api";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Loader2, Save, ShieldBan, ShieldCheck } from "lucide-react";
 
 // Structure of features as they appear in the navigation
@@ -136,7 +134,6 @@ export default function FeatureFlagsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg">{group.label}</CardTitle>
-                    {isCore && <CardDescription className="text-xs mt-1">Core Group</CardDescription>}
                   </div>
                   {!isCore && (
                     <Select
@@ -176,7 +173,7 @@ export default function FeatureFlagsPage() {
                         <Label className={`font-medium ${isEffectivelyDisabled ? 'opacity-50' : ''}`}>
                           {item.name}
                         </Label>
-                        
+
                         {isMainDashboard ? (
                           <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Core / Cannot Disable</span>
                         ) : (

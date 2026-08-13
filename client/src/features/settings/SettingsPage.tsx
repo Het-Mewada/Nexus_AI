@@ -54,8 +54,8 @@ export default function SettingsPage() {
 
   const updateProfile = useMutation({
     mutationFn: (data: Partial<UserType>) => userApi.updateProfile(data),
-    onSuccess: (updatedUser) => { 
-      toast.success("Profile updated"); 
+    onSuccess: (updatedUser) => {
+      toast.success("Profile updated");
       refreshProfile();
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       if (updatedUser?.data?.currency !== user?.currency) {
@@ -93,7 +93,7 @@ export default function SettingsPage() {
     setIsChangingPassword(true);
     const { error } = await resetPassword(newPassword);
     setIsChangingPassword(false);
-    
+
     if (error) {
       toast.error(error);
     } else {
@@ -117,7 +117,7 @@ export default function SettingsPage() {
   const onProfileSubmit = (data: ProfileForm) => updateProfile.mutate(data);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your account preferences and settings</p>
@@ -269,11 +269,11 @@ export default function SettingsPage() {
               <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
                 <div className="space-y-2">
                   <Label>New Password</Label>
-                  <Input 
-                    type="password" 
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)} 
-                    placeholder="••••••••" 
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
                   />
                 </div>
                 <Button type="submit" disabled={isChangingPassword || !newPassword}>

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { feedbackApi } from "@/services/api";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { FeedbackThread } from "./FeedbackThread";
 import type { Feedback } from "@/types";
 
 const feedbackSchema = z.object({
@@ -94,7 +95,7 @@ export default function FeedbackPage() {
     formData.append("title", data.title);
     formData.append("description", data.description);
     formData.append("type", data.type);
-    
+
     files.forEach((file) => {
       formData.append("attachments", file);
     });
@@ -114,14 +115,14 @@ export default function FeedbackPage() {
     switch (status) {
       case "OPEN": return <Badge variant="secondary">Open</Badge>;
       case "IN_PROGRESS": return <Badge variant="default" className="bg-blue-500">In Progress</Badge>;
-      case "RESOLVED": return <Badge variant="outline" className="text-green-500 border-green-500"><CheckCircle2 className="h-3 w-3 mr-1"/> Resolved</Badge>;
+      case "RESOLVED": return <Badge variant="outline" className="text-green-500 border-green-500"><CheckCircle2 className="h-3 w-3 mr-1" /> Resolved</Badge>;
       case "REJECTED": return <Badge variant="destructive">Closed</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Feedback & Support</h1>
         <p className="text-muted-foreground mt-2">
@@ -166,18 +167,18 @@ export default function FeedbackPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea 
-                    id="description" 
-                    placeholder="Provide detailed information..." 
+                  <Textarea
+                    id="description"
+                    placeholder="Provide detailed information..."
                     className="min-h-[120px]"
-                    {...register("description")} 
+                    {...register("description")}
                   />
                   {errors.description && <p className="text-sm text-red-500">{errors.description.message}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <Label>Attachments (Screenshots - Max 3)</Label>
-                  
+
                   {files.length > 0 && (
                     <div className="flex gap-2 flex-wrap mb-2">
                       {files.map((file, i) => (
@@ -192,7 +193,7 @@ export default function FeedbackPage() {
                   )}
 
                   {files.length < 3 && (
-                    <div 
+                    <div
                       className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
                       onClick={() => document.getElementById("file-upload")?.click()}
                     >
@@ -201,9 +202,9 @@ export default function FeedbackPage() {
                       <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, max 5MB</p>
                     </div>
                   )}
-                  <input 
-                    id="file-upload" 
-                    type="file" 
+                  <input
+                    id="file-upload"
+                    type="file"
                     multiple
                     accept="image/*"
                     className="hidden"
@@ -259,7 +260,7 @@ export default function FeedbackPage() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm whitespace-pre-wrap">{feedback.description}</p>
-                      
+
                       {feedback.attachments && feedback.attachments.length > 0 && (
                         <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
                           {feedback.attachments.map((url, index) => (
@@ -269,6 +270,8 @@ export default function FeedbackPage() {
                           ))}
                         </div>
                       )}
+
+                      <FeedbackThread feedback={feedback} isAdmin={false} />
                     </CardContent>
                   </Card>
                 </motion.div>

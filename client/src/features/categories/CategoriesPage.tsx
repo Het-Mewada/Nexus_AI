@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, Tag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Edit, Trash2, Tag, Search, FolderOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ export default function CategoriesPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [selectedColor, setSelectedColor] = useState("#6366f1");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CategoryForm>({
     resolver: zodResolver(categorySchema),
@@ -45,6 +46,13 @@ export default function CategoriesPage() {
     queryFn: () => categoryApi.list(),
     select: (res) => res.data as Category[],
   });
+
+  const filteredCategories = useMemo(() => {
+    if (!categories) return [];
+    if (!searchQuery.trim()) return categories;
+    const q = searchQuery.toLowerCase();
+    return categories.filter((cat) => cat.name.toLowerCase().includes(q));
+  }, [categories, searchQuery]);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Category>) => categoryApi.create(data),
@@ -86,82 +94,187 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Categories</h1>
-          <p className="text-muted-foreground mt-1">Manage expense categories</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Categories</h1>
+            {categories && (
+              <Badge variant="secondary" className="px-2.5 py-0.5 text-xs rounded-full font-medium">
+                {categories.length} total
+              </Badge>
+            )}
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">Organize and color-code your expense categories</p>
         </div>
-        <Button onClick={() => setIsOpen(true)} variant="gradient"><Plus className="h-4 w-4" /> Add Category</Button>
+
+        <div className="flex items-center gap-3">
+          {/* Search input */}
+          <div className="relative w-full md:w-60">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+
+          <Button onClick={() => setIsOpen(true)} size="sm" className="h-9 gap-1.5 shrink-0">
+            <Plus className="h-4 w-4" /> Add Category
+          </Button>
+        </div>
       </div>
 
+      {/* Grid Content */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => <Card key={i} className="animate-pulse"><CardContent className="p-6"><div className="h-20 bg-muted rounded" /></CardContent></Card>)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-16 rounded-xl bg-muted/40 animate-pulse border border-border/40" />
+          ))}
         </div>
+      ) : filteredCategories.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+              <FolderOpen className="h-6 w-6 text-muted-foreground/60" />
+            </div>
+            <h3 className="text-sm font-medium">No categories found</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {searchQuery ? `No category matching "${searchQuery}"` : "Get started by adding your first category."}
+            </p>
+            {searchQuery && (
+              <Button variant="ghost" size="sm" className="mt-3 text-xs" onClick={() => setSearchQuery("")}>
+                Clear Search
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories?.map((cat, i) => (
-            <motion.div key={cat.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="group hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundColor: cat.color }} />
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${cat.color}15` }}>
-                      <Tag className="h-5 w-5" style={{ color: cat.color }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          <AnimatePresence mode="popLayout">
+            {filteredCategories.map((cat) => (
+              <motion.div
+                key={cat.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+              >
+                <div className="group relative flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card/60 hover:bg-card hover:border-border hover:shadow-sm transition-all duration-200 min-h-[64px]">
+                  {/* Category Info */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
+                    <div
+                      className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+                      style={{ backgroundColor: `${cat.color}18` }}
+                    >
+                      <Tag className="h-4.5 w-4.5" style={{ color: cat.color }} />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-lg">{cat.name}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                        <span className="text-xs text-muted-foreground">{cat.color}</span>
-                        {cat.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm text-foreground leading-tight group-hover:text-primary transition-colors">
+                        {cat.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="text-[11px] text-muted-foreground font-mono">
+                          {cat.color}
+                        </span>
                       </div>
                     </div>
-                    {!cat.isDefault && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(cat)}><Edit className="h-4 w-4" /></Button>
-                        <ConfirmDeleteDialog title="Delete Category" onConfirm={() => deleteMutation.mutate(cat.id)}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+
+                  {/* Actions or Default Tag */}
+                  <div className="flex items-center shrink-0">
+                    {cat.isDefault ? (
+                      <span className="text-[10px] font-semibold text-muted-foreground/70 bg-muted px-2 py-0.5 rounded uppercase tracking-wider">
+                        Default
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          onClick={() => handleEdit(cat)}
+                          title="Edit category"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <ConfirmDeleteDialog
+                          title="Delete Category"
+                          onConfirm={() => deleteMutation.mutate(cat.id)}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            title="Delete category"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </ConfirmDeleteDialog>
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
+      {/* Add / Edit Dialog */}
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle>
-            <DialogDescription>Create a custom expense category</DialogDescription>
+            <DialogDescription>Create a custom expense category to organize your finances</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>Category Name</Label>
-              <Input placeholder="e.g. Subscriptions" {...register("name")} />
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category Name</Label>
+              <Input placeholder="e.g. Subscriptions, Groceries" {...register("name")} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
+
             <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex flex-wrap gap-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Color Palette</Label>
+              <div className="flex flex-wrap gap-2 py-1">
                 {colorOptions.map((color) => (
-                  <button key={color} type="button" onClick={() => setSelectedColor(color)} className={`h-8 w-8 rounded-full transition-all ${selectedColor === color ? "ring-2 ring-offset-2 ring-primary scale-110" : "hover:scale-105"}`} style={{ backgroundColor: color }} />
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`h-7 w-7 rounded-full transition-all ${
+                      selectedColor === color ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110" : "hover:scale-105 opacity-80 hover:opacity-100"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
                 ))}
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <Label className="text-xs">Custom:</Label>
-                <input type="color" value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)} className="h-8 w-12 cursor-pointer rounded" />
-                <span className="text-xs text-muted-foreground">{selectedColor}</span>
+              <div className="flex items-center gap-2 pt-2">
+                <Label className="text-xs text-muted-foreground">Custom Color:</Label>
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  className="h-7 w-10 cursor-pointer rounded border-0 bg-transparent"
+                />
+                <span className="text-xs font-mono text-muted-foreground">{selectedColor}</span>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button type="submit" variant="gradient" disabled={createMutation.isPending || updateMutation.isPending}>
-                {editing ? "Update" : "Create"} Category
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={createMutation.isPending || updateMutation.isPending}>
+                {editing ? "Save Changes" : "Create Category"}
               </Button>
             </DialogFooter>
           </form>

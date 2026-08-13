@@ -18,6 +18,7 @@ router.patch('/wallets/:id', familyController.updateWallet);
 router.delete('/wallets/:id', familyController.deleteWallet);
 
 // Wallet Transactions
+router.get('/:groupId/logs', familyController.getGroupTransactions);
 router.get('/wallets/:walletId/transactions', familyController.getWalletTransactions);
 router.post('/wallets/:walletId/transactions', familyController.addWalletTransaction);
 

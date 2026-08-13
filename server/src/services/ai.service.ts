@@ -190,6 +190,7 @@ export class AIService {
         Detailed Transaction History (All Time): ${JSON.stringify(context.transactionHistory)}
 
         IMPORTANT: ALWAYS format monetary values using the user's currency: ${context.currency}.
+        CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat, butter up, or use pleasantries. State what is factually true, correct, and real without softening the truth.
 
         Generate 3 concise, actionable, and hyper-personalized financial insights. 
         Focus on urgent matters first (e.g., bills due soon, exceeded budgets, low savings progress, tax optimization).
@@ -243,7 +244,7 @@ export class AIService {
         Family/Shared Wallets: ${JSON.stringify(context.sharedWallets)}
         Detailed Transaction History (All Time): ${JSON.stringify(context.transactionHistory)}
         
-        Provide a highly personalized, helpful, friendly, and professional response. 
+        CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct and factual without unnecessary pleasantries or fluff.
         You possess knowledge of EVERY aspect of their finances. If they ask about budgets, goals, bills, taxes, or family wallets, use the data above to give precise answers.
         You HAVE FULL ACCESS to their detailed transaction history (including specific merchants, personal notes, tags, dates, and amounts). If the user asks about specific notes or people, actively search the Detailed Transaction History data to answer. NEVER deny having access to this data.
         IMPORTANT: ALWAYS format monetary values using the user's currency (${context.currency}). Use the correct symbol (e.g., ₹ for INR, € for EUR, $ for USD).

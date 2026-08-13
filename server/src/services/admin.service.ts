@@ -85,6 +85,14 @@ export const adminService = {
       include: {
         user: {
           select: { name: true, email: true, avatarUrl: true }
+        },
+        replies: {
+          include: {
+            user: {
+              select: { id: true, name: true, role: true, email: true }
+            }
+          },
+          orderBy: { createdAt: "asc" }
         }
       }
     });

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { subscriptionApi } from "@/services/api";
 import { formatCurrency, formatDate, currencies } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -262,6 +263,8 @@ export default function SubscriptionsPage() {
               <Label>Service URL (Optional)</Label>
               <Input type="url" placeholder="https://..." {...register("url")} />
             </div>
+
+            <BalanceWarningCallout amount={watch("amount")} />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>

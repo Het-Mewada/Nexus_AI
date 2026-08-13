@@ -19,6 +19,7 @@ export class AiCfoService {
       
       const prompt = `
         You are an elite, proactive AI Chief Financial Officer (CFO).
+        CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual.
         Review the following financial profile for ${context.month} ${context.year}:
         
         Income: ${context.totalIncome} ${context.currency}

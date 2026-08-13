@@ -32,7 +32,7 @@ export class OpportunityService {
         })),
       };
 
-      const prompt = `You are an AI Opportunity Engine for personal finance. Look at the user's current loans and investments:
+      const prompt = `You are an AI Opportunity Engine for personal finance. Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual. Look at the user's current loans and investments:
 ${JSON.stringify(payload)}
 
 Your goal is to identify concrete, actionable opportunities. For example:

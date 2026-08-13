@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Users, Wallet, Shield, Copy, ArrowDownRight, ArrowUpRight, AlertTriangle } from "lucide-react";
+import { Plus, Users, Wallet, Shield, Copy, ArrowDownRight, ArrowUpRight, AlertTriangle, Receipt, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -12,18 +13,102 @@ import { familyApi } from "@/services/api";
 import { formatCurrency, formatDate, currencies } from "@/lib/utils";
 import { toast } from "sonner";
 import type { SharedWallet } from "@/types";
+import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { useAuth } from "@/context/AuthContext";
+
+function GroupLogsTab({ groupId, currencySymbol }: { groupId: string; currencySymbol: string }) {
+  const { data: logsResponse, isLoading } = useQuery({
+    queryKey: ["group-logs", groupId],
+    queryFn: () => familyApi.getGroupLogs(groupId),
+  });
+
+  const logs = logsResponse?.data || [];
+
+  const getInitials = (name: string | null | undefined) => name ? name.substring(0, 2).toUpperCase() : "U";
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-16 rounded-lg bg-muted/40 animate-pulse border border-border/40" />
+        ))}
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="text-center py-10 bg-muted/30 rounded-lg border border-dashed">
+        <Receipt className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+        <p className="text-sm font-medium">No activity logs recorded yet</p>
+        <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+          Deposits and withdrawals in shared wallets will automatically appear here and sync to personal expenses & incomes.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {logs.map((log) => {
+        const isDeposit = log.type === "DEPOSIT";
+        return (
+          <div key={log.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border bg-card/60 hover:bg-card transition-all gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Avatar className="h-9 w-9 shrink-0 border">
+                <AvatarImage src={log.user?.avatarUrl || undefined} />
+                <AvatarFallback className="text-xs">{getInitials(log.user?.name || log.user?.email)}</AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-sm truncate">{log.user?.name || log.user?.email || "Member"}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {isDeposit ? "deposited into" : "withdrew from"}
+                  </span>
+                  <Badge variant="secondary" className="text-xs font-medium">
+                    {log.wallet?.name || "Shared Wallet"}
+                  </Badge>
+                </div>
+
+                {log.description && (
+                  <p className="text-xs text-muted-foreground mt-1 italic font-sans">"{log.description}"</p>
+                )}
+
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-muted-foreground/40">•</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {formatDate(log.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 sm:text-right">
+              <div className={`p-1.5 rounded-full ${isDeposit ? "bg-emerald-500/10 text-emerald-500" : "bg-rose-500/10 text-rose-500"}`}>
+                {!isDeposit ? <ArrowDownRight className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
+              </div>
+              <span className={`text-base font-bold font-mono ${isDeposit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                {isDeposit ? "+" : "-"}{currencySymbol}{Number(log.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function FamilyPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
-  
+
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [joinGroupOpen, setJoinGroupOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [groupName, setGroupName] = useState("");
-  
+
   const [walletOpen, setWalletOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [walletName, setWalletName] = useState("");
@@ -60,12 +145,19 @@ export default function FamilyPage() {
 
   const addTxMutation = useMutation({
     mutationFn: ({ walletId, data }: { walletId: string; data: any }) => familyApi.addTransaction(walletId, data),
-    onSuccess: () => { 
-      queryClient.invalidateQueries({ queryKey: ["family"] }); 
-      toast.success("Transaction recorded"); 
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["family"] });
+      queryClient.invalidateQueries({ queryKey: ["group-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["charts"] });
+      queryClient.invalidateQueries({ queryKey: ["cashflow"] });
+      toast.success("Transaction recorded & synced with personal finance!");
       setTransactionOpen(false);
-      setTxAmount(""); setTxDesc(""); 
+      setTxAmount(""); setTxDesc("");
     },
+    onError: (err: any) => toast.error(err.response?.data?.error?.message || err.message || "Failed to record transaction"),
   });
 
   const copyInviteCode = (code: string) => {
@@ -122,12 +214,12 @@ export default function FamilyPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle className="text-2xl flex items-center gap-2">
-                        {group.name} 
-                        {myRole === 'OWNER' && <Shield className="h-4 w-4 text-emerald-500"  />}
+                        {group.name}
+                        {myRole === 'OWNER' && <Shield className="h-4 w-4 text-emerald-500" />}
                       </CardTitle>
                       <CardDescription>Created {formatDate(group.createdAt)} • {group.members.length} members</CardDescription>
                     </div>
-                    
+
                     <div className="flex items-center gap-2 bg-background border px-3 py-1.5 rounded-md">
                       <span className="text-xs text-muted-foreground font-medium">Invite Code:</span>
                       <span className="font-mono text-sm font-bold tracking-wider">{group.inviteCode}</span>
@@ -137,7 +229,7 @@ export default function FamilyPage() {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="p-0">
                   <Tabs defaultValue="wallets" className="w-full">
                     <div className="px-6 border-b">
@@ -147,6 +239,9 @@ export default function FamilyPage() {
                         </TabsTrigger>
                         <TabsTrigger value="members" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
                           Members ({group.members.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="logs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
+                          Activity Logs
                         </TabsTrigger>
                         {isAdmin && (
                           <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
@@ -165,7 +260,7 @@ export default function FamilyPage() {
                           </Button>
                         )}
                       </div>
-                      
+
                       {!group.wallets || group.wallets.length === 0 ? (
                         <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed">
                           <Wallet className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
@@ -190,9 +285,9 @@ export default function FamilyPage() {
                                     <h3 className="text-2xl font-bold">{formatCurrency(Number(wallet.balance))}</h3>
                                   </div>
                                 </div>
-                                
+
                                 <div className="flex gap-2 mt-4 pt-4 border-t">
-                                  <Button size="sm" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" 
+                                  <Button size="sm" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
                                     onClick={() => { setSelectedWallet(wallet); setTxType("DEPOSIT"); setTransactionOpen(true); }}>
                                     <ArrowDownRight className="h-4 w-4 mr-1" /> Add Funds
                                   </Button>
@@ -221,11 +316,10 @@ export default function FamilyPage() {
                               <p className="text-xs text-muted-foreground truncate">{member.user.email}</p>
                             </div>
                             <div className="shrink-0">
-                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${
-                                member.role === 'OWNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                              <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${member.role === 'OWNER' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                                 member.role === 'ADMIN' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                                'bg-muted text-muted-foreground'
-                              }`}>
+                                  'bg-muted text-muted-foreground'
+                                }`}>
                                 {member.role}
                               </span>
                             </div>
@@ -233,7 +327,11 @@ export default function FamilyPage() {
                         ))}
                       </div>
                     </TabsContent>
-                    
+
+                    <TabsContent value="logs" className="p-6 m-0">
+                      <GroupLogsTab groupId={group.id} currencySymbol={currencySymbol} />
+                    </TabsContent>
+
                     {isAdmin && (
                       <TabsContent value="settings" className="p-6 m-0 space-y-4">
                         <div className="rounded-lg border border-destructive/20 p-4 bg-destructive/5">
@@ -248,7 +346,7 @@ export default function FamilyPage() {
                   </Tabs>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       )}
@@ -256,16 +354,20 @@ export default function FamilyPage() {
       {/* Create Group Dialog */}
       <Dialog open={createGroupOpen} onOpenChange={setCreateGroupOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Family Group</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogHeader>
+            <DialogTitle>Create Family Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Group Name</Label>
-              <Input placeholder="e.g. Smith Family, Couple Finances" value={groupName} onChange={e => setGroupName(e.target.value)} />
+              <Input placeholder="e.g. Smith Family, Vacation Budget" value={groupName} onChange={e => setGroupName(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateGroupOpen(false)}>Cancel</Button>
-            <Button onClick={() => createGroupMutation.mutate(groupName)} disabled={!groupName || createGroupMutation.isPending}>Create</Button>
+            <Button onClick={() => createGroupMutation.mutate(groupName)} disabled={!groupName.trim() || createGroupMutation.isPending}>
+              Create Group
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -273,17 +375,20 @@ export default function FamilyPage() {
       {/* Join Group Dialog */}
       <Dialog open={joinGroupOpen} onOpenChange={setJoinGroupOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Join Family Group</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogHeader>
+            <DialogTitle>Join Family Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Invite Code</Label>
-              <Input placeholder="e.g. A1B2C3" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} className="uppercase font-mono tracking-widest text-lg" />
-              <p className="text-xs text-muted-foreground">Ask the group owner for the 6-character invite code.</p>
+              <Input placeholder="Enter 8-character code" value={inviteCode} onChange={e => setInviteCode(e.target.value)} className="font-mono uppercase" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setJoinGroupOpen(false)}>Cancel</Button>
-            <Button onClick={() => joinGroupMutation.mutate(inviteCode)} disabled={inviteCode.length < 5 || joinGroupMutation.isPending}>Join</Button>
+            <Button onClick={() => joinGroupMutation.mutate(inviteCode.trim())} disabled={!inviteCode.trim() || joinGroupMutation.isPending}>
+              Join Group
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -291,45 +396,49 @@ export default function FamilyPage() {
       {/* Create Wallet Dialog */}
       <Dialog open={walletOpen} onOpenChange={setWalletOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Create Shared Wallet</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogHeader>
+            <DialogTitle>Create Shared Wallet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Wallet Name</Label>
-              <Input placeholder="e.g. Groceries Fund, Vacation Savings" value={walletName} onChange={e => setWalletName(e.target.value)} />
+              <Input placeholder="e.g. Groceries, Emergencies, House Fund" value={walletName} onChange={e => setWalletName(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setWalletOpen(false)}>Cancel</Button>
-            <Button onClick={() => selectedGroup && createWalletMutation.mutate({ groupId: selectedGroup, name: walletName })} disabled={!walletName || createWalletMutation.isPending}>Create Wallet</Button>
+            <Button onClick={() => selectedGroup && createWalletMutation.mutate({ groupId: selectedGroup, name: walletName })} disabled={!walletName.trim() || createWalletMutation.isPending}>
+              Create Wallet
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Add Transaction Dialog */}
+      {/* Add Transaction (Deposit / Withdraw) Dialog */}
       <Dialog open={transactionOpen} onOpenChange={setTransactionOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{txType === 'DEPOSIT' ? 'Add Funds to' : 'Withdraw from'} {selectedWallet?.name}</DialogTitle>
+            <DialogTitle>{txType === "DEPOSIT" ? "Add Funds to" : "Withdraw Funds from"} {selectedWallet?.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Amount ({currencySymbol})</Label>
-              <Input type="number" step="0.01" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
-              <p className="text-xs text-muted-foreground">Please enter amount in {user?.currency || 'INR'} ({currencySymbol})</p>
+              <Input type="number" step="0.01" placeholder="0.00" value={txAmount} onChange={e => setTxAmount(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Description (Optional)</Label>
-              <Input placeholder="e.g. Monthly contribution, Grocery run" value={txDesc} onChange={e => setTxDesc(e.target.value)} />
+              <Label>Description / Reason (Optional)</Label>
+              <Input placeholder="e.g. Monthly contribution, Grocery expense" value={txDesc} onChange={e => setTxDesc(e.target.value)} />
             </div>
+            <BalanceWarningCallout amount={txType === "DEPOSIT" ? txAmount : 0} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setTransactionOpen(false)}>Cancel</Button>
-            <Button 
-              variant="gradient"
-              onClick={() => selectedWallet && addTxMutation.mutate({ walletId: selectedWallet.id, data: { type: txType, amount: Number(txAmount), description: txDesc } })} 
-              disabled={!txAmount || addTxMutation.isPending}
+            <Button
+              className={txType === "DEPOSIT" ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""}
+              onClick={() => selectedWallet && addTxMutation.mutate({ walletId: selectedWallet.id, data: { type: txType, amount: Number(txAmount), description: txDesc } })}
+              disabled={!txAmount || Number(txAmount) <= 0 || addTxMutation.isPending}
             >
-              {txType === 'DEPOSIT' ? 'Deposit' : 'Withdraw'}
+              Confirm {txType === "DEPOSIT" ? "Deposit" : "Withdrawal"}
             </Button>
           </DialogFooter>
         </DialogContent>

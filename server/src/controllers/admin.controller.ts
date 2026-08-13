@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { adminService } from "../services/admin.service";
+import { feedbackService } from "../services/feedback.service";
 import { logger } from "../utils/logger";
 import { supabaseAdmin } from "../config/supabase";
 import { prisma } from "../config/database";
@@ -100,6 +101,29 @@ export const adminController = {
     } catch (error) {
       logger.error("Admin update feedback error:", error);
       res.status(500).json({ success: false, error: { message: "Failed to update feedback" } });
+    }
+  },
+
+  async addFeedbackReply(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      const { message } = req.body;
+      
+      if (!message) {
+        res.status(400).json({ success: false, error: { message: "Message is required" } });
+        return;
+      }
+
+      const reply = await feedbackService.addReply(id as string, req.user!.id, message);
+      res.status(201).json({ success: true, data: reply });
+      return;
+    } catch (error: any) {
+      if (error.message.includes("not found") || error.message.includes("Cannot reply")) {
+        res.status(400).json({ success: false, error: { message: error.message } });
+        return;
+      }
+      logger.error("Admin add feedback reply error:", error);
+      res.status(500).json({ success: false, error: { message: "Failed to add reply" } });
     }
   }
 };

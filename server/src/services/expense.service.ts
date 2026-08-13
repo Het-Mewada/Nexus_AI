@@ -107,6 +107,10 @@ export class ExpenseService {
     const existing = await expenseRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "EXPENSE_NOT_FOUND", "Expense not found");
 
+    if (existing.isAutoSynced) {
+      throw new AppError(400, "SYNCED_RECORD", "Auto-synced transactions cannot be edited directly from personal expenses.");
+    }
+
     let receiptUrl = existing.receiptUrl;
     let receiptPath = existing.receiptPath;
 
@@ -131,7 +135,7 @@ export class ExpenseService {
     if (!existing) throw new AppError(404, "EXPENSE_NOT_FOUND", "Expense not found");
 
     if (existing.isAutoSynced) {
-      throw new AppError(400, "SYNCED_RECORD", "This is a synced record. Please delete it from the Bills or Subscriptions section.");
+      throw new AppError(400, "SYNCED_RECORD", "Auto-synced transactions cannot be deleted directly from personal expenses.");
     }
 
     if (existing.receiptPath) {

@@ -176,6 +176,7 @@ export class FinancialAgentService {
 
       const prompt = `You are an autonomous AI Financial Agent analyzing a user's complete financial ecosystem.
 Your job is to find problems, risks, and opportunities that the user may not be aware of.
+CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual.
 
 USER'S FINANCIAL DATA (${context.month} ${context.year}):
 - Monthly Salary: ${context.monthlySalary} ${context.currency}

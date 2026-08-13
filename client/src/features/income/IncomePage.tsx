@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Plus, TrendingUp, Edit, Trash2, Search, RefreshCw } from "lucide-react";
+import { Plus, TrendingUp, Edit, Trash2, Search, RefreshCw, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,6 +184,11 @@ export default function IncomePage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium truncate">{income.source}</p>
                         {income.isRecurring && <Badge variant="secondary" className="text-xs">Recurring</Badge>}
+                        {income.isAutoSynced && (
+                          <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-500 border-indigo-500/20 flex items-center gap-1 font-medium">
+                            <Lock className="h-3 w-3" /> Auto-Synced
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">{formatDate(income.date)}{income.notes ? ` · ${income.notes}` : ""}</p>
                     </div>
@@ -203,15 +208,17 @@ export default function IncomePage() {
                       {income.isAutoSynced ? (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Cannot delete synced record">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500" title="Auto-synced record (Non-deleteable)">
+                              <Lock className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                              <DialogTitle className="text-destructive">Synced Record</DialogTitle>
-                              <DialogDescription>
-                                This income was automatically logged by a Bill or Subscription. To delete it, please go to the respective section and undo the payment to ensure accurate tracking.
+                              <DialogTitle className="flex items-center gap-2 text-amber-500">
+                                <Lock className="h-5 w-5" /> Non-Deleteable Record
+                              </DialogTitle>
+                              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                                This income entry was automatically created from a shared group wallet withdrawal, bill, or subscription. Auto-synced entries cannot be deleted or modified directly from personal incomes.
                               </DialogDescription>
                             </DialogHeader>
                             <DialogFooter>

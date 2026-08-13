@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,17 +13,22 @@ import { format } from "date-fns";
 export default function UserManagementPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const limit = 10;
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "users", debouncedSearch],
-    queryFn: () => adminApi.listUsers({ search: debouncedSearch }),
-  });
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1); // Reset page on search change
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDebouncedSearch(search);
-  };
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "users", debouncedSearch, page],
+    queryFn: () => adminApi.listUsers({ search: debouncedSearch, page, limit }),
+  });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "SUSPENDED" }) => adminApi.updateUserStatus(id, status),
@@ -55,7 +60,7 @@ export default function UserManagementPage() {
           <p className="text-muted-foreground">Manage accounts, roles, and access.</p>
         </div>
         
-        <form onSubmit={handleSearch} className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -65,8 +70,7 @@ export default function UserManagementPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button type="submit" variant="secondary">Search</Button>
-        </form>
+        </div>
       </div>
 
       <Card>
@@ -173,6 +177,32 @@ export default function UserManagementPage() {
             </tbody>
           </table>
         </div>
+        
+        {data?.data?.pagination && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <span className="text-sm text-muted-foreground">
+              Showing page {data.data.pagination.page} of {data.data.pagination.totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={page === data.data.pagination.totalPages || data.data.pagination.totalPages === 0}
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

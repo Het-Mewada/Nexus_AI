@@ -137,6 +137,16 @@ export const getWalletTransactions = async (req: AuthRequest, res: Response) => 
   }
 };
 
+export const getGroupTransactions = async (req: AuthRequest, res: Response) => {
+  try {
+    const transactions = await familyService.getGroupTransactions(req.user!.id, req.params.groupId as string);
+    sendSuccess(res, transactions);
+  } catch (error: any) {
+    logger.error('Failed to get group transactions', { error });
+    res.status(400).json({ success: false, error: { message: error.message || 'Failed to fetch group logs' } });
+  }
+};
+
 export const familyController = {
   createGroup,
   joinGroup,
@@ -147,4 +157,5 @@ export const familyController = {
   deleteWallet,
   addWalletTransaction,
   getWalletTransactions,
+  getGroupTransactions,
 };

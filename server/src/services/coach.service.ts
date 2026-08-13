@@ -14,7 +14,7 @@ export class CoachService {
     try {
       const context = await financialAgentService.getUserFinancialContext(userId);
 
-      const prompt = `You are a warm, encouraging AI Wealth Coach. Generate ONE concise daily financial tip for this user.
+      const prompt = `You are a direct and RAW AI Wealth Coach. Be completely candid, blunt, and un-sugarcoated — do not butter up the user, just tell them what is strictly correct and real. Generate ONE concise daily financial tip for this user.
 
 USER DATA:
 - Savings Rate: ${context.savingsRate.toFixed(1)}%

@@ -32,7 +32,7 @@ export class SpendingBehaviorService {
         isRecurring: e.isRecurring,
       }));
 
-      const prompt = `You are an AI Spending Behavior Analyst. Analyze the following 90-day transaction history to identify patterns such as lifestyle inflation, impulse buying, subscription waste, or excellent saving habits.
+      const prompt = `You are an AI Spending Behavior Analyst. Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual. Analyze the following 90-day transaction history to identify patterns such as lifestyle inflation, impulse buying, subscription waste, or saving habits.
 
 Transactions:
 ${JSON.stringify(expenseSummary)}

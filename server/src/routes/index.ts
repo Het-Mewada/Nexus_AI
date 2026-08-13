@@ -155,6 +155,7 @@ router.delete("/notifications/:id", authMiddleware, notificationController.delet
 import { feedbackController } from "../controllers/feedback.controller";
 import { uploadAttachments } from "../middleware/upload";
 router.post("/feedback", authMiddleware, uploadAttachments.array("attachments", 3), feedbackController.create);
+router.post("/feedback/:id/reply", authMiddleware, feedbackController.addReply);
 router.get("/feedback", authMiddleware, feedbackController.list);
 router.delete("/feedback/:id", authMiddleware, feedbackController.delete);
 
@@ -230,5 +231,6 @@ router.patch("/admin/users/:id/status", authMiddleware, adminMiddleware, adminCo
 router.delete("/admin/users/:id", authMiddleware, adminMiddleware, adminController.deleteUser);
 router.get("/admin/feedbacks", authMiddleware, adminMiddleware, adminController.listFeedbacks);
 router.patch("/admin/feedbacks/:id/status", authMiddleware, adminMiddleware, adminController.updateFeedbackStatus);
+router.post("/admin/feedbacks/:id/reply", authMiddleware, adminMiddleware, adminController.addFeedbackReply);
 
 export default router;

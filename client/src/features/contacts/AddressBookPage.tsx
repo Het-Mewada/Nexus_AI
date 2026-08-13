@@ -97,7 +97,7 @@ function ContactsTab() {
       },
       birthday: formData.birthday ? new Date(formData.birthday).toISOString() : null,
     };
-    
+
     // Remove temporary input fields
     const { tagsInput, linkedin, twitter, ...finalPayload } = payload as any;
 
@@ -114,33 +114,33 @@ function ContactsTab() {
       setSyncProgress({ current: 0, total: 0 });
       let allConnections: any[] = [];
       let pageToken = "";
-      
+
       do {
         const url = `https://people.googleapis.com/v1/people/me/connections?personFields=names,emailAddresses,phoneNumbers&pageSize=1000${pageToken ? `&pageToken=${pageToken}` : ''}`;
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         const data = await response.json();
-        
+
         if (data.connections) {
           allConnections = [...allConnections, ...data.connections];
         }
         pageToken = data.nextPageToken || "";
       } while (pageToken);
-      
+
       if (allConnections.length > 0) {
         const existingContacts = contactsResponse?.data || [];
-        
+
         const validConnections = allConnections.filter(person => {
           const name = person.names?.[0]?.displayName;
           if (!name) return false;
-          
+
           const email = person.emailAddresses?.[0]?.value || null;
           const phone = person.phoneNumbers?.[0]?.value || null;
-          
-          return !existingContacts.some(c => 
-            (c.name.toLowerCase() === name.toLowerCase()) || 
-            (email && c.email === email) || 
+
+          return !existingContacts.some(c =>
+            (c.name.toLowerCase() === name.toLowerCase()) ||
+            (email && c.email === email) ||
             (phone && c.phone === phone)
           );
         });
@@ -155,12 +155,12 @@ function ContactsTab() {
             email: person.emailAddresses?.[0]?.value || null,
             phone: person.phoneNumbers?.[0]?.value || null,
           }));
-          
+
           await contactsApi.bulkCreate(chunk);
           imported += chunk.length;
           setSyncProgress(prev => ({ ...prev, current: imported }));
         }
-        
+
         if (imported > 0) {
           toast.success(`Successfully imported ${imported} new contacts from Google!`);
           queryClient.invalidateQueries({ queryKey: ["contacts"] });
@@ -230,7 +230,7 @@ function ContactsTab() {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(contact)}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if(confirm('Delete contact?')) deleteMutation.mutate(contact.id) }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete contact?')) deleteMutation.mutate(contact.id) }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -255,7 +255,7 @@ function ContactsTab() {
                       <span>{new Date(contact.birthday).toLocaleDateString()}</span>
                     </div>
                   )}
-                  
+
                   {contact.socialMediaLinks && Object.entries(contact.socialMediaLinks).length > 0 && (
                     <div className="flex items-center gap-2 mt-2">
                       <Link2 className="h-4 w-4" />
@@ -339,7 +339,7 @@ function ContactsTab() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isSyncing} onOpenChange={() => {}}>
+      <Dialog open={isSyncing} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Syncing Google Contacts</DialogTitle>
@@ -359,8 +359,8 @@ function ContactsTab() {
             </div>
             {/* Visual Progress Bar */}
             <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary transition-all duration-300 ease-in-out" 
+              <div
+                className="h-full bg-primary transition-all duration-300 ease-in-out"
                 style={{ width: `${syncProgress.total > 0 ? (syncProgress.current / syncProgress.total) * 100 : 0}%` }}
               />
             </div>
@@ -490,7 +490,7 @@ function AddressesTab() {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(address)}>
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if(confirm('Delete address?')) deleteMutation.mutate(address.id) }}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete address?')) deleteMutation.mutate(address.id) }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -562,7 +562,7 @@ function AddressesTab() {
 
 export default function AddressBookPage() {
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className=" max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Address Book</h1>
         <p className="text-muted-foreground mt-2">
@@ -573,14 +573,14 @@ export default function AddressBookPage() {
       <Tabs defaultValue="contacts" className="w-full">
         <TabsList className="inline-flex flex-wrap h-auto justify-start">
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="addresses">Addresses</TabsTrigger>
+          {/* <TabsTrigger value="addresses">Addresses</TabsTrigger> */}
         </TabsList>
         <TabsContent value="contacts">
           <ContactsTab />
         </TabsContent>
-        <TabsContent value="addresses">
+        {/* <TabsContent value="addresses">
           <AddressesTab />
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

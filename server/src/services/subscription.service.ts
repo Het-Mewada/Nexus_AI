@@ -96,6 +96,33 @@ export class SubscriptionService {
         nextDate.setDate(Math.min(originalDay, daysInNewMonth));
       }
 
+      let categoryId = sub.categoryId;
+      if (!categoryId) {
+        let subCat = await prisma.category.findFirst({
+          where: { userId: sub.userId, name: { equals: 'Subscriptions', mode: 'insensitive' } }
+        });
+        if (!subCat) {
+          subCat = await prisma.category.create({
+            data: { userId: sub.userId, name: 'Subscriptions', color: '#8b5cf6', icon: 'repeat' }
+          });
+        }
+        categoryId = subCat.id;
+      }
+
+      await prisma.expense.create({
+        data: {
+          userId: sub.userId,
+          amount: sub.amount,
+          categoryId,
+          merchant: sub.name,
+          date: new Date(),
+          paymentMethod: 'subscription',
+          notes: `Subscription payment: ${sub.name}`,
+          isAutoSynced: true,
+          syncSource: 'subscription',
+        }
+      });
+
       await prisma.subscription.update({
         where: { id: sub.id },
         data: { nextPayment: nextDate },

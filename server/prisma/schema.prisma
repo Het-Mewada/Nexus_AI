@@ -65,6 +65,8 @@ model User {
   workflows         Workflow[]
   financialPlans    FinancialPlan[]
   feedbacks         Feedback[]
+  feedbackReplies   FeedbackReply[]
+  sharedWalletTransactions SharedWalletTransaction[]
 
   @@map("users")
 }
@@ -483,8 +485,10 @@ model SharedWalletTransaction {
   createdAt       DateTime  @default(now()) @map("created_at")
 
   wallet          SharedWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([walletId, createdAt(sort: Desc)])
+  @@index([userId])
   @@map("shared_wallet_transactions")
 }
 
@@ -843,9 +847,26 @@ model Feedback {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies FeedbackReply[]
 
   @@index([userId, status])
   @@map("feedbacks")
+}
+
+model FeedbackReply {
+  id         String   @id @default(uuid())
+  feedbackId String   @map("feedback_id")
+  userId     String   @map("user_id") // The user who replied (admin or the feedback author)
+  message    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([feedbackId])
+  @@index([userId])
+  @@map("feedback_replies")
 }
 
 model SystemSetting {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { systemApi } from "@/services/api";
+import { systemApi, notificationApi } from "@/services/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -74,6 +74,7 @@ const navigationGroups = [
     label: "Account",
     items: [
       { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Feedback", href: "/feedback", icon: MessageSquare },
     ]
   }
 ];
@@ -92,14 +93,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     refetchInterval: 10000 // poll every 10s
   });
 
+  const { data: notificationData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: notificationApi.list,
+    refetchInterval: 30000 // poll every 30s
+  });
+
   const systemFeatures = featureData?.data?.features || {};
+  const unreadCount = notificationData?.data?.unreadCount || 0;
 
   const adminGroup = user?.role === "ADMIN" ? [{
     label: "Admin Controls",
     items: [
-      { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-      { name: "Users", href: "/admin/users", icon: Users },
-      { name: "Global Feedback", href: "/admin/feedback", icon: MessageSquare },
+      { name: "Admin Dashboard", href: "/admin", icon: LayoutDashboard },
+      { name: "Feedbacks", href: "/admin/feedback", icon: MessageSquare },
       { name: "Feature Flags", href: "/admin/features", icon: Shield },
     ]
   }] : [];
@@ -272,8 +279,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           className={className}
                           title={!sidebarOpen ? item.name : undefined}
                         >
-                          <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
-                          {sidebarOpen && <span className="whitespace-nowrap">{item.name}</span>}
+                          <div className="relative">
+                            <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                            {!sidebarOpen && item.name === "Notifications" && unreadCount > 0 && (
+                              <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
+                                {unreadCount > 9 ? "9+" : unreadCount}
+                              </span>
+                            )}
+                          </div>
+                          {sidebarOpen && (
+                            <span className="whitespace-nowrap flex-1 flex items-center justify-between">
+                              {item.name}
+                              {item.name === "Notifications" && unreadCount > 0 && (
+                                <span className="flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ml-2">
+                                  {unreadCount > 99 ? "99+" : unreadCount}
+                                </span>
+                              )}
+                            </span>
+                          )}
                           {isActive && sidebarOpen && (
                             <motion.div
                               layoutId="sidebar-indicator"

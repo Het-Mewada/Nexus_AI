@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { goalApi } from "@/services/api";
 import { formatCurrency, formatDate, currencies } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -47,7 +48,7 @@ export default function GoalsPage() {
 
   const goals = goalsResponse?.data || [];
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<GoalForm>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<GoalForm>({
     resolver: zodResolver(goalSchema),
     defaultValues: { currentAmount: 0, color: "#3b82f6", icon: "🏆" },
   });
@@ -230,6 +231,8 @@ export default function GoalsPage() {
                 </div>
               </div>
             </div>
+
+            <BalanceWarningCallout amount={editing ? Math.max(0, Number(watch("currentAmount") || 0) - Number(editing.currentAmount || 0)) : Number(watch("currentAmount") || 0)} />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown } from "lucide-react";
+import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { expenseApi, categoryApi } from "@/services/api";
 import { formatCurrency, formatDate, paymentMethods, currencies } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -278,6 +279,11 @@ export default function ExpensesPage() {
                         <Badge variant="outline" className="text-xs" style={{ borderColor: expense.category?.color, color: expense.category?.color }}>
                           {expense.category?.name}
                         </Badge>
+                        {expense.isAutoSynced && (
+                          <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-500 border-indigo-500/20 flex items-center gap-1 font-medium">
+                            <Lock className="h-3 w-3" /> Auto-Synced
+                          </Badge>
+                        )}
                         {expense.tags.length > 0 && expense.tags.slice(0, 2).map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
                         ))}
@@ -300,15 +306,17 @@ export default function ExpensesPage() {
                       {expense.isAutoSynced ? (
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" title="Cannot delete synced record">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500" title="Auto-synced record (Non-deleteable)">
+                              <Lock className="h-4 w-4" />
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[425px]">
                             <DialogHeader>
-                              <DialogTitle className="text-destructive">Synced Record</DialogTitle>
-                              <DialogDescription>
-                                This expense was automatically logged by a Bill or Subscription. To delete it, please go to the respective section and undo the payment to ensure accurate tracking.
+                              <DialogTitle className="flex items-center gap-2 text-amber-500">
+                                <Lock className="h-5 w-5" /> Non-Deleteable Record
+                              </DialogTitle>
+                              <DialogDescription className="pt-2 text-sm leading-relaxed">
+                                This expense entry was automatically created from a shared group wallet deposit, bill, or subscription. Auto-synced entries cannot be deleted or modified directly from personal expenses.
                               </DialogDescription>
                             </DialogHeader>
                             <DialogFooter>
@@ -425,6 +433,7 @@ export default function ExpensesPage() {
                   )}
                   <input id="receipt-input" type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
                 </div>
+                <BalanceWarningCallout amount={watch("amount")} />
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>
                   <Button type="submit" variant="gradient" disabled={createMutation.isPending || updateMutation.isPending}>

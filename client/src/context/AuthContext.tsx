@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { api } from "@/lib/api-client";
+import { toast } from "sonner";
 import type { User as AppUser } from "@/types";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
@@ -46,7 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.success) {
         setUser(res.data);
       }
-    } catch {
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+         toast.error("Your account has been suspended by an administrator.");
+         await supabase.auth.signOut();
+         setSession(null);
+         setSupabaseUser(null);
+         setUser(null);
+         return;
+      }
       // User will be created on first sync
     }
   }, []);
@@ -108,9 +117,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
-    return { error: null };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return { error: error.message };
+
+      if (data.session) {
+        try {
+          await api.post("/auth/sync", { isNewUser: false }, {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+          });
+        } catch (err: any) {
+          if (err.response?.status === 403) {
+            try { await supabase.auth.signOut(); } catch (e) {} // ignore signout errors
+            setSession(null);
+            setSupabaseUser(null);
+            setUser(null);
+            return { error: "Your account has been suspended by an administrator." };
+          }
+        }
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      return { error: err.message || "An unexpected error occurred" };
+    }
   };
 
   const signOut = async () => {

@@ -1,5 +1,6 @@
 import { PrismaClient, Feedback } from "@prisma/client";
 import { storageService } from "./storage.service";
+import { notificationService } from "./notification.service";
 
 const prisma = new PrismaClient();
 
@@ -33,6 +34,16 @@ export const feedbackService = {
   async listByUser(userId: string): Promise<Feedback[]> {
     return prisma.feedback.findMany({
       where: { userId },
+      include: {
+        replies: {
+          include: {
+            user: {
+              select: { id: true, name: true, role: true, email: true }
+            }
+          },
+          orderBy: { createdAt: "asc" }
+        }
+      },
       orderBy: { createdAt: "desc" },
     });
   },
@@ -62,5 +73,44 @@ export const feedbackService = {
       where: { id },
       data: { status },
     });
+  },
+
+  async addReply(feedbackId: string, userId: string, message: string) {
+    const feedback = await prisma.feedback.findUnique({
+      where: { id: feedbackId },
+      include: { user: true }
+    });
+
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+
+    if (feedback.status === "RESOLVED" || feedback.status === "REJECTED") {
+      throw new Error("Cannot reply to a resolved or rejected feedback");
+    }
+
+    const reply = await prisma.feedbackReply.create({
+      data: {
+        feedbackId,
+        userId,
+        message,
+      },
+      include: {
+        user: { select: { id: true, name: true, role: true, email: true } }
+      }
+    });
+
+    // Notify user if admin replied
+    if (userId !== feedback.userId) {
+      await notificationService.create(
+        feedback.userId,
+        "FEEDBACK_REPLY",
+        "New Reply on your Feedback",
+        `An admin replied to your feedback: "${feedback.title}"`,
+        { feedbackId: feedback.id }
+      );
+    }
+
+    return reply;
   },
 };

@@ -50,3 +50,5 @@ export function useMediaQuery(query: string): boolean {
 export function useMobile(): boolean {
   return useMediaQuery("(max-width: 768px)");
 }
+
+export { useBalanceCheck } from "./useBalanceCheck";

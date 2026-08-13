@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bug, Lightbulb, MessageSquare, Wrench } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FeedbackThread } from "../feedback/FeedbackThread";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -139,6 +140,8 @@ export default function GlobalFeedbackPage() {
                     ))}
                   </div>
                 )}
+                
+                <FeedbackThread feedback={feedback} isAdmin={true} />
               </CardContent>
             </Card>
           ))

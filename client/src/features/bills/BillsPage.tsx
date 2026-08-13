@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { billApi, analyticsApi } from "@/services/api";
 import { formatCurrency, formatDate, currencies } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -213,17 +214,6 @@ export default function BillsPage() {
                   <Card className={`hover:shadow-md transition-all ${bill.isPaid ? 'opacity-60' : ''} ${isOverdue ? 'border-destructive/50 border' : ''}`}>
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                        <button
-                          onClick={() => togglePaidMutation.mutate({ id: bill.id, isPaid: !bill.isPaid })}
-                          className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                        >
-                          {bill.isPaid ? (
-                            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-                          ) : (
-                            <Circle className="h-8 w-8" />
-                          )}
-                        </button>
-
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <h3 className={`text-lg font-semibold truncate ${bill.isPaid ? 'line-through text-muted-foreground' : ''}`}>{bill.name}</h3>
@@ -260,11 +250,26 @@ export default function BillsPage() {
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between sm:justify-end gap-6 sm:w-[200px]">
-                          <span className={`text-xl font-bold ${isOverdue ? 'text-destructive' : ''}`}>
+                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:w-[260px] shrink-0">
+                          <span className={`text-lg font-bold ${isOverdue ? 'text-destructive' : ''}`}>
                             {formatCurrency(Number(bill.amount))}
                           </span>
-                          <div className="flex gap-1 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              variant={bill.isPaid ? "secondary" : "default"}
+                              size="sm"
+                              className="h-8 text-xs gap-1 px-2.5"
+                              onClick={() => togglePaidMutation.mutate({ id: bill.id, isPaid: !bill.isPaid })}
+                            >
+                              {bill.isPaid ? (
+                                <>
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                                  <span>Paid</span>
+                                </>
+                              ) : (
+                                <span>Mark Paid</span>
+                              )}
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(bill)}><Edit className="h-4 w-4" /></Button>
                             <ConfirmDeleteDialog title="Delete Bill" onConfirm={() => deleteMutation.mutate(bill.id)}>
                               <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
@@ -326,6 +331,8 @@ export default function BillsPage() {
                 <Switch id="paid" checked={watch("isPaid")} onCheckedChange={(v) => setValue("isPaid", v)} />
               </div>
             </div>
+
+            <BalanceWarningCallout amount={watch("amount")} />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>Cancel</Button>

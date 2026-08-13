@@ -48,7 +48,6 @@ const FeedbackPage = lazy(() => import("@/features/feedback/FeedbackPage"));
 
 // Admin pages
 const AdminDashboardPage = lazy(() => import("@/features/admin/AdminDashboardPage"));
-const UserManagementPage = lazy(() => import("@/features/admin/UserManagementPage"));
 const GlobalFeedbackPage = lazy(() => import("@/features/admin/GlobalFeedbackPage"));
 const FeatureFlagsPage = lazy(() => import("@/features/admin/FeatureFlagsPage"));
 
@@ -102,63 +101,62 @@ export default function App() {
     <GoogleOAuthProvider clientId={googleClientId}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
-                <Route path="/signup" element={<GuestGuard><SignUpPage /></GuestGuard>} />
-                <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <AuthProvider>
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  <Route path="/login" element={<GuestGuard><LoginPage /></GuestGuard>} />
+                  <Route path="/signup" element={<GuestGuard><SignUpPage /></GuestGuard>} />
+                  <Route path="/forgot-password" element={<GuestGuard><ForgotPasswordPage /></GuestGuard>} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Protected Routes */}
-                <Route element={<ProtectedLayout />}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/ai" element={<AIAdvisorChat />} />
-                  <Route path="/income" element={<IncomePage />} />
-                  <Route path="/expenses" element={<ExpensesPage />} />
-                  <Route path="/salary" element={<SalaryPage />} />
-                  <Route path="/categories" element={<CategoriesPage />} />
-                  
-                  {/* Wealth & Planning */}
-                  <Route path="/budgets" element={<BudgetPage />} />
-                  <Route path="/goals" element={<GoalsPage />} />
-                  <Route path="/coach" element={<CoachPage />} />
-                  <Route path="/smart-savings" element={<SmartSavingsPage />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
-                  <Route path="/cfo" element={<AiCfoPage />} />
-                  <Route path="/bills" element={<BillsPage />} />
-                  <Route path="/subscriptions" element={<SubscriptionsPage />} />
-                  <Route path="/portfolio" element={<PortfolioPage />} />
-                  <Route path="/liabilities" element={<LiabilitiesPage />} />
-                  <Route path="/tax" element={<TaxPage />} />
-                  <Route path="/family" element={<FamilyPage />} />
-                  <Route path="/contacts" element={<AddressBookPage />} />
-                  <Route path="/documents" element={<DocumentsPage />} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedLayout />}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/ai" element={<AIAdvisorChat />} />
+                    <Route path="/income" element={<IncomePage />} />
+                    <Route path="/expenses" element={<ExpensesPage />} />
+                    <Route path="/salary" element={<SalaryPage />} />
+                    <Route path="/categories" element={<CategoriesPage />} />
 
-                  <Route path="/analytics" element={<AnalyticsPage />} />
-                  <Route path="/feedback" element={<FeedbackPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
-                  <Route path="/admin/users" element={<AdminGuard><UserManagementPage /></AdminGuard>} />
-                  <Route path="/admin/feedback" element={<AdminGuard><GlobalFeedbackPage /></AdminGuard>} />
-                  <Route path="/admin/features" element={<AdminGuard><FeatureFlagsPage /></AdminGuard>} />
-                </Route>
+                    {/* Wealth & Planning */}
+                    <Route path="/budgets" element={<BudgetPage />} />
+                    <Route path="/goals" element={<GoalsPage />} />
+                    <Route path="/coach" element={<CoachPage />} />
+                    <Route path="/smart-savings" element={<SmartSavingsPage />} />
+                    <Route path="/calendar" element={<CalendarPage />} />
+                    <Route path="/cfo" element={<AiCfoPage />} />
+                    <Route path="/bills" element={<BillsPage />} />
+                    <Route path="/subscriptions" element={<SubscriptionsPage />} />
+                    <Route path="/portfolio" element={<PortfolioPage />} />
+                    <Route path="/liabilities" element={<LiabilitiesPage />} />
+                    <Route path="/tax" element={<TaxPage />} />
+                    <Route path="/family" element={<FamilyPage />} />
+                    <Route path="/contacts" element={<AddressBookPage />} />
+                    <Route path="/documents" element={<DocumentsPage />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
 
-                {/* Catch all */}
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-          <ToastProvider />
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+                    <Route path="/analytics" element={<AnalyticsPage />} />
+                    <Route path="/feedback" element={<FeedbackPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
+                    <Route path="/admin/feedback" element={<AdminGuard><GlobalFeedbackPage /></AdminGuard>} />
+                    <Route path="/admin/features" element={<AdminGuard><FeatureFlagsPage /></AdminGuard>} />
+                  </Route>
+
+                  {/* Catch all */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+            <ToastProvider />
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </GoogleOAuthProvider>
   );
 }

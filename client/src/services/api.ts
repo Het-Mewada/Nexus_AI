@@ -33,6 +33,8 @@ export const adminApi = {
     api.get<ApiResponse<{ feedbacks: Feedback[]; pagination: any }>>("/admin/feedbacks", { params }).then((r) => r.data),
   updateFeedbackStatus: (id: string, status: string) => 
     api.patch<ApiResponse<any>>(`/admin/feedbacks/${id}/status`, { status }).then((r) => r.data),
+  replyToFeedback: (id: string, message: string) => 
+    api.post<ApiResponse<any>>(`/admin/feedbacks/${id}/reply`, { message }).then((r) => r.data),
   updateSystemFeatures: (features: Record<string, string>) => 
     api.patch<ApiResponse<{ features: Record<string, string> }>>(`/admin/system/features`, { features }).then((r) => r.data),
 };
@@ -246,6 +248,7 @@ export const familyApi = {
   updateWallet: (walletId: string, name: string) => api.patch<ApiResponse<SharedWallet>>(`/family/wallets/${walletId}`, { name }).then((r) => r.data),
   deleteWallet: (walletId: string) => api.delete<ApiResponse<{ message: string }>>(`/family/wallets/${walletId}`).then((r) => r.data),
   getTransactions: (walletId: string) => api.get<ApiResponse<SharedWalletTransaction[]>>(`/family/wallets/${walletId}/transactions`).then((r) => r.data),
+  getGroupLogs: (groupId: string) => api.get<ApiResponse<SharedWalletTransaction[]>>(`/family/${groupId}/logs`).then((r) => r.data),
   addTransaction: (walletId: string, data: { type: string; amount: number; description?: string }) => api.post<ApiResponse<SharedWalletTransaction>>(`/family/wallets/${walletId}/transactions`, data).then((r) => r.data),
 };
 
@@ -352,5 +355,7 @@ export const feedbackApi = {
     api.post<ApiResponse<Feedback>>("/feedback", data, {
       headers: { "Content-Type": "multipart/form-data" },
     }).then((r) => r.data),
+  reply: (id: string, message: string) => 
+    api.post<ApiResponse<any>>(`/feedback/${id}/reply`, { message }).then((r) => r.data),
   delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/feedback/${id}`).then((r) => r.data),
 };

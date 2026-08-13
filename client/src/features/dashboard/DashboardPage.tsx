@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight,
-  ArrowDownRight, BarChart3, Receipt, Clock, Sparkles
+  Wallet, TrendingUp, TrendingDown, PiggyBank, BarChart3, Receipt, Clock, Sparkles
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis,
@@ -103,7 +102,6 @@ export default function DashboardPage() {
       title: "Monthly Income",
       value: d?.monthlyIncome || 0,
       icon: TrendingUp,
-      trend: "up",
       color: "from-emerald-500 to-teal-500",
       bgColor: "bg-emerald-500/10",
       textColor: "text-emerald-600 dark:text-emerald-400",
@@ -112,7 +110,6 @@ export default function DashboardPage() {
       title: "Monthly Expenses",
       value: d?.monthlyExpenses || 0,
       icon: TrendingDown,
-      trend: "down",
       color: "from-rose-500 to-pink-500",
       bgColor: "bg-rose-500/10",
       textColor: "text-rose-600 dark:text-rose-400",
@@ -159,11 +156,7 @@ export default function DashboardPage() {
                     <Badge variant={stat.value >= 20 ? "success" : "warning"}>
                       {stat.value.toFixed(1)}%
                     </Badge>
-                  ) : (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${stat.trend === "up" ? "text-emerald-500" : "text-rose-500"}`}>
-                      {stat.trend === "up" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                    </div>
-                  )}
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
@@ -396,7 +389,7 @@ export default function DashboardPage() {
                     const dueDate = new Date(bill.dueDate);
                     const isOverdue = dueDate < new Date();
                     const daysLeft = Math.ceil((dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    
+
                     return (
                       <div key={bill.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
                         <div>

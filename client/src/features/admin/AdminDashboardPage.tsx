@@ -3,6 +3,7 @@ import { adminApi } from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Activity, MessageSquare, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import UserManagementPage from "./UserManagementPage";
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading } = useQuery({
@@ -104,6 +105,7 @@ export default function AdminDashboardPage() {
           </Card>
         </motion.div>
       </div>
+      <UserManagementPage />
     </div>
   );
 }

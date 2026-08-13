@@ -306,6 +306,16 @@ export interface SharedWalletTransaction {
   amount: number;
   description: string | null;
   createdAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl?: string | null;
+  };
+  wallet?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface Notification {
@@ -489,4 +499,26 @@ export interface Feedback {
   attachments: string[];
   createdAt: string;
   updatedAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+  };
+  replies?: FeedbackReply[];
+}
+
+export interface FeedbackReply {
+  id: string;
+  feedbackId: string;
+  userId: string;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+  };
 }

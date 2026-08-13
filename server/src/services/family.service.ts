@@ -133,13 +133,17 @@ export class FamilyService {
   // ─── Wallet Transactions ──────────────────────────────────────────
 
   async addWalletTransaction(userId: string, walletId: string, data: { type: string; amount: number; description?: string }) {
-    const wallet = await prisma.sharedWallet.findUnique({ where: { id: walletId } });
+    const wallet = await prisma.sharedWallet.findUnique({
+      where: { id: walletId },
+      include: { familyGroup: true }
+    });
     if (!wallet) throw new Error('Wallet not found');
     await this.checkGroupAccess(userId, wallet.familyGroupId);
 
     return prisma.$transaction(async (tx) => {
       const currentWallet = await tx.sharedWallet.findUnique({
         where: { id: walletId },
+        include: { familyGroup: true }
       });
       
       if (!currentWallet) throw new Error('Wallet not found');
@@ -155,6 +159,10 @@ export class FamilyService {
           type: data.type,
           amount: data.amount,
           description: data.description
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+          wallet: { select: { id: true, name: true } }
         }
       });
 
@@ -167,6 +175,45 @@ export class FamilyService {
         }
       });
 
+      const groupName = currentWallet.familyGroup.name;
+
+      if (data.type === 'DEPOSIT') {
+        let category = await tx.category.findFirst({
+          where: { name: { in: ["Family", "Transfer", "Transfers", "Other"] } }
+        });
+        if (!category) {
+          category = await tx.category.findFirst();
+        }
+
+        if (category) {
+          await tx.expense.create({
+            data: {
+              userId,
+              amount: data.amount,
+              categoryId: category.id,
+              merchant: `Group: ${groupName}`,
+              notes: `Deposit to shared wallet "${currentWallet.name}" (${groupName})${data.description ? ` - ${data.description}` : ''}`,
+              paymentMethod: 'transfer',
+              date: new Date(),
+              isAutoSynced: true,
+              syncSource: 'SHARED_WALLET_DEPOSIT',
+            }
+          });
+        }
+      } else if (data.type === 'WITHDRAWAL') {
+        await tx.income.create({
+          data: {
+            userId,
+            amount: data.amount,
+            source: `Group: ${groupName} (${currentWallet.name})`,
+            notes: `Shared wallet withdrawal from "${currentWallet.name}" (${groupName})${data.description ? ` - ${data.description}` : ''}`,
+            date: new Date(),
+            isAutoSynced: true,
+            syncSource: 'SHARED_WALLET_WITHDRAWAL',
+          }
+        });
+      }
+
       return transaction;
     });
   }
@@ -178,6 +225,27 @@ export class FamilyService {
 
     return prisma.sharedWalletTransaction.findMany({
       where: { walletId },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        wallet: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async getGroupTransactions(userId: string, groupId: string) {
+    await this.checkGroupAccess(userId, groupId);
+
+    return prisma.sharedWalletTransaction.findMany({
+      where: {
+        wallet: {
+          familyGroupId: groupId
+        }
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        wallet: { select: { id: true, name: true } }
+      },
       orderBy: { createdAt: 'desc' }
     });
   }

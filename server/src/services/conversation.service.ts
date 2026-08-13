@@ -172,7 +172,7 @@ RULES:
 - CRITICAL: Reply ONLY to what the user explicitly asks for. Do NOT provide unsolicited financial summaries, analytics, or lists of your capabilities unless explicitly requested.
 - If the user just says "hello" or greets you, simply greet them back concisely and ask how you can help.
 - Keep responses concise and directly address the user's prompt.
-- Be friendly but professional.`;
+- CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual without pleasantries or fluff.`;
 
     try {
       const rawContents = [

@@ -77,6 +77,10 @@ export class IncomeService {
     const existing = await incomeRepository.findById(id, userId);
     if (!existing) throw new AppError(404, "INCOME_NOT_FOUND", "Income record not found");
 
+    if (existing.isAutoSynced) {
+      throw new AppError(400, "SYNCED_RECORD", "Auto-synced transactions cannot be edited directly from personal incomes.");
+    }
+
     await incomeRepository.update(id, userId, data);
     return incomeRepository.findById(id, userId);
   }
@@ -86,7 +90,7 @@ export class IncomeService {
     if (!existing) throw new AppError(404, "INCOME_NOT_FOUND", "Income record not found");
 
     if (existing.isAutoSynced) {
-      throw new AppError(400, "SYNCED_RECORD", "This is a synced record. Please delete it from the Bills or Subscriptions section.");
+      throw new AppError(400, "SYNCED_RECORD", "Auto-synced transactions cannot be deleted directly from personal incomes.");
     }
 
     await incomeRepository.softDelete(id, userId);
