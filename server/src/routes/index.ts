@@ -88,6 +88,7 @@ router.delete("/expenses/:id", authMiddleware, expenseController.delete);
 // ─── Salary ──────────────────────────────────────
 router.get("/salary", authMiddleware, salaryController.list);
 router.post("/salary", authMiddleware, validate(createSalarySchema), salaryController.create);
+router.patch("/salary/leave-config", authMiddleware, salaryController.updateLeaveConfig);
 router.get("/salary/:id", authMiddleware, salaryController.getById);
 router.patch("/salary/:id", authMiddleware, validate(updateSalarySchema), salaryController.update);
 router.delete("/salary/:id", authMiddleware, salaryController.delete);

@@ -26,55 +26,55 @@ const navigationGroups = [
   {
     label: "Main",
     items: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Nexus Advisor", href: "/ai", icon: Search },
-      { name: "Nexus Agent", href: "/cfo", icon: BrainCircuit },
-      { name: "Analytics", href: "/analytics", icon: PieChart },
-      { name: "Notifications", href: "/notifications", icon: Bell },
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, version: "v1" },
+      { name: "Nexus Advisor", href: "/ai", icon: Search, version: "v1" },
+      { name: "Nexus Agent", href: "/cfo", icon: BrainCircuit, version: "v1.1" },
+      { name: "Analytics", href: "/analytics", icon: PieChart, version: "v1" },
+      { name: "Notifications", href: "/notifications", icon: Bell, version: "v1" },
     ]
   },
   {
     label: "Finance",
     items: [
-      { name: "Income", href: "/income", icon: TrendingUp },
-      { name: "Expenses", href: "/expenses", icon: TrendingDown },
-      { name: "Salary", href: "/salary", icon: Wallet },
-      { name: "Categories", href: "/categories", icon: Tag },
+      { name: "Income", href: "/income", icon: TrendingUp, version: "v1" },
+      { name: "Expenses", href: "/expenses", icon: TrendingDown, version: "v1" },
+      { name: "Salary", href: "/salary", icon: Wallet, version: "v1" },
+      { name: "Categories", href: "/categories", icon: Tag, version: "v1" },
     ]
   },
   {
     label: "Planning",
     items: [
-      { name: "Budgets", href: "/budgets", icon: Target },
-      { name: "Smart Savings", href: "/smart-savings", icon: PiggyBank },
-      { name: "Calendar", href: "/calendar", icon: Calendar },
-      { name: "Goals", href: "/goals", icon: Trophy },
-      { name: "Nexus Coach", href: "/coach", icon: Sparkles },
-      { name: "Tax Planning", href: "/tax", icon: Calculator },
+      { name: "Budgets", href: "/budgets", icon: Target, version: "v1" },
+      { name: "Smart Savings", href: "/smart-savings", icon: PiggyBank, version: "v1.1" },
+      { name: "Calendar", href: "/calendar", icon: Calendar, version: "v1" },
+      { name: "Goals", href: "/goals", icon: Trophy, version: "v1" },
+      { name: "Nexus Coach", href: "/coach", icon: Sparkles, version: "v1.1" },
+      { name: "Tax Planning", href: "/tax", icon: Calculator, version: "v1.1" },
     ]
   },
   {
     label: "Obligations",
     items: [
-      { name: "Bills", href: "/bills", icon: Calendar },
-      { name: "Subscriptions", href: "/subscriptions", icon: Repeat },
-      { name: "Liabilities", href: "/liabilities", icon: Shield },
+      { name: "Bills", href: "/bills", icon: Calendar, version: "v1" },
+      { name: "Subscriptions", href: "/subscriptions", icon: Repeat, version: "v1" },
+      { name: "Liabilities", href: "/liabilities", icon: Shield, version: "v1.1" },
     ]
   },
   {
     label: "Personal",
     items: [
-      { name: "Portfolio", href: "/portfolio", icon: Briefcase },
-      { name: "Family", href: "/family", icon: Users },
-      { name: "Address Book", href: "/contacts", icon: Contact },
-      { name: "Documents", href: "/documents", icon: FolderClosed },
+      { name: "Portfolio", href: "/portfolio", icon: Briefcase, version: "v1.1" },
+      { name: "Family", href: "/family", icon: Users, version: "v1" },
+      { name: "Contacts", href: "/contacts", icon: Contact, version: "v1" },
+      { name: "Documents", href: "/documents", icon: FolderClosed, version: "v1" },
     ]
   },
   {
     label: "Account",
     items: [
-      { name: "Settings", href: "/settings", icon: Settings },
-      { name: "Feedback", href: "/feedback", icon: MessageSquare },
+      { name: "Settings", href: "/settings", icon: Settings, version: "v1" },
+      { name: "Feedback", href: "/feedback", icon: MessageSquare, version: "v1" },
     ]
   }
 ];

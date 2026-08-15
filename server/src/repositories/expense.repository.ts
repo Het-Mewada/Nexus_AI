@@ -15,7 +15,7 @@ export interface ExpenseFilters {
 }
 
 export class ExpenseRepository {
-  private buildWhere(filters: ExpenseFilters): Prisma.ExpenseWhereInput {
+  private async buildWhere(filters: ExpenseFilters): Promise<Prisma.ExpenseWhereInput> {
     const where: Prisma.ExpenseWhereInput = {
       userId: filters.userId,
       deletedAt: null,
@@ -41,16 +41,49 @@ export class ExpenseRepository {
 
     if (filters.paymentMethod) where.paymentMethod = filters.paymentMethod;
 
+    let tagMatchIds: string[] | undefined;
+    let searchTagMatchIds: string[] | undefined;
+
     if (filters.tags && filters.tags.length > 0) {
-      where.tags = { hasSome: filters.tags };
+      const tagsParam = filters.tags.map((t) => t.toLowerCase());
+      const result = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM expenses 
+        WHERE user_id = ${filters.userId} 
+        AND deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1 FROM unnest(tags) t 
+          WHERE LOWER(t) = ANY(ARRAY[${Prisma.join(tagsParam)}]::text[])
+        )
+      `;
+      tagMatchIds = result.map((r) => r.id);
+    }
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      const result = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM expenses 
+        WHERE user_id = ${filters.userId} 
+        AND deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1 FROM unnest(tags) t 
+          WHERE LOWER(t) LIKE ${`%${searchLower}%`}
+        )
+      `;
+      searchTagMatchIds = result.map((r) => r.id);
+    }
+
+    if (tagMatchIds) {
+      where.id = { in: tagMatchIds };
     }
 
     if (filters.search) {
       where.OR = [
         { merchant: { contains: filters.search, mode: "insensitive" } },
         { notes: { contains: filters.search, mode: "insensitive" } },
-        { tags: { hasSome: [filters.search] } },
       ];
+      if (searchTagMatchIds && searchTagMatchIds.length > 0) {
+        where.OR.push({ id: { in: searchTagMatchIds } });
+      }
     }
 
     return where;
@@ -62,7 +95,7 @@ export class ExpenseRepository {
     take: number,
     orderBy: Record<string, "asc" | "desc">
   ) {
-    const where = this.buildWhere(filters);
+    const where = await this.buildWhere(filters);
     const [data, total] = await Promise.all([
       prisma.expense.findMany({
         where,

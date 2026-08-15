@@ -640,11 +640,13 @@ model Achievement {
 // ─── Phase 4B: Leave & Calendar Engine ─────────────────────────────────────
 
 model LeaveBalance {
-  id           String   @id @default(uuid())
-  userId       String   @unique @map("user_id")
-  casualLeaves Decimal  @default(0) @map("casual_leaves") @db.Decimal(5, 1)
-  sickLeaves   Decimal  @default(0) @map("sick_leaves") @db.Decimal(5, 1)
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  casualLeaves        Decimal  @default(0) @map("casual_leaves") @db.Decimal(5, 1)
+  sickLeaves          Decimal  @default(0) @map("sick_leaves") @db.Decimal(5, 1)
+  monthlyCasualLeaves Decimal  @default(1) @map("monthly_casual_leaves") @db.Decimal(5, 1)
+  monthlySickLeaves   Decimal  @default(0.5) @map("monthly_sick_leaves") @db.Decimal(5, 1)
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

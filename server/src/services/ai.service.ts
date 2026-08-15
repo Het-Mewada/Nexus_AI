@@ -265,10 +265,32 @@ export class AIService {
         await new Promise(resolve => setTimeout(resolve, 2000));
         return this.chatAdvisor(userId, query, retries - 1);
       }
-      logger.error("Error in AI Advisor Chat", { message: error.message, stack: error.stack, status: error.status });
+      logger.error("Error in AI Advisor Chat, falling back to free API", { message: error.message, stack: error.stack, status: error.status });
+
+      try {
+        // Fallback to a free text generation API (pollinations.ai)
+        // We use query instead of prompt because prompt is scoped to the try block above,
+        // and a smaller payload is better for this GET-based fallback.
+        const fallbackQuery = "You are Nexus AI Financial Advisor. User says: " + query;
+        const maxPromptLength = 4000;
+        const truncatedPrompt = fallbackQuery.length > maxPromptLength ? fallbackQuery.substring(0, maxPromptLength) + "... (truncated)" : fallbackQuery;
+
+        const fallbackResponse = await fetch('https://text.pollinations.ai/' + encodeURIComponent(truncatedPrompt));
+        if (fallbackResponse.ok) {
+          const text = await fallbackResponse.text();
+          return {
+            role: "assistant",
+            content: text || "I am here to help you manage your finances. How can I assist you today?"
+          };
+        }
+      } catch (fallbackError) {
+        logger.error("Fallback API failed", { error: fallbackError });
+      }
+
+      // Ultimate fallback so we never return an "unable to generate" error message
       return {
         role: "assistant",
-        content: "I'm currently experiencing high traffic and the AI service is temporarily overloaded. Please try again in a few moments."
+        content: "I'm having a little trouble connecting to my full knowledge base right now, I will able back soon."
       };
     }
   }

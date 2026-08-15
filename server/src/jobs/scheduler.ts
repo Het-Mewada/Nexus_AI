@@ -159,9 +159,11 @@ class Scheduler {
           const balance = await prisma.leaveBalance.findUnique({ where: { userId: user.id } });
           const currentCL = balance ? Number(balance.casualLeaves) : 0;
           const currentSL = balance ? Number(balance.sickLeaves) : 0;
+          const monthlyCL = balance ? Number(balance.monthlyCasualLeaves) : 1;
+          const monthlySL = balance ? Number(balance.monthlySickLeaves) : 0.5;
           
-          const newCL = Math.min(25, currentCL + 1);
-          const newSL = Math.min(25, currentSL + 0.5);
+          const newCL = Math.min(25, currentCL + monthlyCL);
+          const newSL = Math.min(25, currentSL + monthlySL);
 
           await prisma.leaveBalance.upsert({
             where: { userId: user.id },

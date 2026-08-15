@@ -48,6 +48,15 @@ export class SalaryController {
       next(error);
     }
   }
+  async updateLeaveConfig(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { monthlyCasualLeaves, monthlySickLeaves } = req.body;
+      const result = await salaryService.updateLeaveConfig(req.user!.id, monthlyCasualLeaves, monthlySickLeaves);
+      sendSuccess(res, result, "Leave configuration updated successfully");
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const salaryController = new SalaryController();

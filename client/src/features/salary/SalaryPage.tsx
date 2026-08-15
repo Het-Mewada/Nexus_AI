@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Wallet, Calculator, Plus, Trash2, Calendar, FileText, Download } from "lucide-react";
+import { Wallet, Calculator, Plus, Trash2, Calendar, FileText, Download, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ export default function SalaryPage() {
   const { user } = useAuth();
   const currencySymbol = currencies.find(c => c.value === (user?.currency || 'INR'))?.symbol || '₹';
   const [isOpen, setIsOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [configForm, setConfigForm] = useState({ monthlyCasualLeaves: 1, monthlySickLeaves: 0.5 });
   const [selectedRecord, setSelectedRecord] = useState<SalaryRecord | null>(null);
   const now = new Date();
 
@@ -48,7 +50,7 @@ export default function SalaryPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["salary"],
     queryFn: () => salaryApi.list(),
-    select: (res) => (res as any).data as { records: SalaryRecord[], balance: { casualLeaves: number, sickLeaves: number } },
+    select: (res) => (res as any).data as { records: SalaryRecord[], balance: { casualLeaves: number, sickLeaves: number, monthlyCasualLeaves: number, monthlySickLeaves: number } },
   });
 
   const createMutation = useMutation({
@@ -87,6 +89,16 @@ export default function SalaryPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Salary record deleted");
     },
+  });
+
+  const configMutation = useMutation({
+    mutationFn: (data: { monthlyCasualLeaves: number, monthlySickLeaves: number }) => salaryApi.updateLeaveConfig(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["salary"] });
+      toast.success("Leave configuration updated");
+      setIsConfigOpen(false);
+    },
+    onError: () => toast.error("Failed to update leave configuration"),
   });
 
   const baseSalary = Number(watch("baseSalary")) || 0;
@@ -149,9 +161,20 @@ export default function SalaryPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border-indigo-500/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Leave Balance</CardTitle>
-            <CardDescription>Available paid time off</CardDescription>
+          <CardHeader className="pb-2 flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="text-lg">Leave Balance</CardTitle>
+              <CardDescription>Available paid time off</CardDescription>
+            </div>
+            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-2" onClick={() => {
+              setConfigForm({
+                monthlyCasualLeaves: data?.balance?.monthlyCasualLeaves ?? 1,
+                monthlySickLeaves: data?.balance?.monthlySickLeaves ?? 0.5,
+              });
+              setIsConfigOpen(true);
+            }}>
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </Button>
           </CardHeader>
           <CardContent className="flex justify-between items-center">
             <div className="text-center space-y-1">
@@ -166,11 +189,10 @@ export default function SalaryPage() {
           </CardContent>
         </Card>
 
-        {latestSalary && (
+        {/* {latestSalary && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Latest Expected Salary</CardTitle>
-              <CardDescription>{getMonthName(latestSalary.month)} {latestSalary.year}</CardDescription>
+              <CardTitle>{getMonthName(latestSalary.month)} {latestSalary.year}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-end">
@@ -192,7 +214,7 @@ export default function SalaryPage() {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
       </div>
 
       <Card>
@@ -391,6 +413,42 @@ export default function SalaryPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isConfigOpen} onOpenChange={setIsConfigOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configure Monthly Leave Accrual</DialogTitle>
+            <DialogDescription>Set how many leaves are credited to your balance on the 1st of every month.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Monthly Casual Leaves</Label>
+              <Input 
+                type="number" step="0.5" min="0" 
+                value={configForm.monthlyCasualLeaves} 
+                onChange={(e) => setConfigForm({ ...configForm, monthlyCasualLeaves: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Monthly Sick Leaves</Label>
+              <Input 
+                type="number" step="0.5" min="0" 
+                value={configForm.monthlySickLeaves} 
+                onChange={(e) => setConfigForm({ ...configForm, monthlySickLeaves: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsConfigOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={() => configMutation.mutate(configForm)} 
+              disabled={configMutation.isPending}
+            >
+              Save Configuration
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

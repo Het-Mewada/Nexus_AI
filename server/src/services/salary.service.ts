@@ -19,8 +19,26 @@ export class SalaryService {
 
     return {
       casualLeaves: Math.max(0, accruedCL - takenCL),
-      sickLeaves: Math.max(0, accruedSL - takenSL)
+      sickLeaves: Math.max(0, accruedSL - takenSL),
+      monthlyCasualLeaves: leaveBalance ? Number(leaveBalance.monthlyCasualLeaves) : 1,
+      monthlySickLeaves: leaveBalance ? Number(leaveBalance.monthlySickLeaves) : 0.5
     };
+  }
+
+  async updateLeaveConfig(userId: string, monthlyCasualLeaves: number, monthlySickLeaves: number) {
+    const leaveBalance = await prisma.leaveBalance.upsert({
+      where: { userId },
+      update: {
+        monthlyCasualLeaves,
+        monthlySickLeaves
+      },
+      create: {
+        userId,
+        monthlyCasualLeaves,
+        monthlySickLeaves
+      }
+    });
+    return leaveBalance;
   }
 
   async list(userId: string) {

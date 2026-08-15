@@ -76,10 +76,11 @@ export const expenseApi = {
 
 // ─── Salary ──────────────────────────────────────
 export const salaryApi = {
-  list: () => api.get<ApiResponse<{ records: SalaryRecord[], balance: { casualLeaves: number, sickLeaves: number } }>>("/salary").then((r) => r.data),
+  list: () => api.get<ApiResponse<{ records: SalaryRecord[], balance: { casualLeaves: number, sickLeaves: number, monthlyCasualLeaves: number, monthlySickLeaves: number } }>>("/salary").then((r) => r.data),
   getById: (id: string) => api.get<ApiResponse<SalaryRecord>>(`/salary/${id}`).then((r) => r.data),
   create: (data: Partial<SalaryRecord>) => api.post<ApiResponse<SalaryRecord>>("/salary", data).then((r) => r.data),
   update: (id: string, data: Partial<SalaryRecord>) => api.patch<ApiResponse<SalaryRecord>>(`/salary/${id}`, data).then((r) => r.data),
+  updateLeaveConfig: (data: { monthlyCasualLeaves: number, monthlySickLeaves: number }) => api.patch<ApiResponse<any>>("/salary/leave-config", data).then((r) => r.data),
   delete: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/salary/${id}`).then((r) => r.data),
 };
 

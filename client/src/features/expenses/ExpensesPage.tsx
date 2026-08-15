@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown, Lock } from "lucide-react";
+import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown, Lock, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,10 +48,12 @@ export default function ExpensesPage() {
   const [sortBy, setSortBy] = useLocalStorage("exp_sortBy", "date");
   const [sortOrder, setSortOrder] = useLocalStorage<"asc" | "desc">("exp_sortOrder", "desc");
   const [filterCategory, setFilterCategory] = useLocalStorage("exp_filterCategory", "");
+  const [filterTags, setFilterTags] = useLocalStorage("exp_filterTags", "");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<string>("manual");
   const [scanFile, setScanFile] = useState<File | null>(null);
   const debouncedSearch = useDebounce(search, 300);
+  const debouncedTags = useDebounce(filterTags, 300);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
@@ -65,11 +67,12 @@ export default function ExpensesPage() {
   });
 
   const { data, isLoading } = useQuery({
-    queryKey: ["expenses", page, debouncedSearch, sortBy, sortOrder, filterCategory],
+    queryKey: ["expenses", page, debouncedSearch, sortBy, sortOrder, filterCategory, debouncedTags],
     queryFn: () => {
       const params: Record<string, string> = { page: String(page), limit: "20", sortBy, sortOrder };
       if (debouncedSearch) params.search = debouncedSearch;
       if (filterCategory) params.categoryId = filterCategory;
+      if (debouncedTags) params.tags = debouncedTags;
       return expenseApi.list(params);
     },
   });
@@ -194,7 +197,11 @@ export default function ExpensesPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by merchant, notes, tags..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
+              <Input placeholder="Search by merchant, notes..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
+            </div>
+            <div className="relative flex-1">
+              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Filter by tags (comma separated)..." value={filterTags} onChange={(e) => { setFilterTags(e.target.value); setPage(1); }} className="pl-9" />
             </div>
             <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v === "all" ? "" : v); setPage(1); }}>
               <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
