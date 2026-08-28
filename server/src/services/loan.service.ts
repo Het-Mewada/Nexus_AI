@@ -9,10 +9,16 @@ export class LoanService {
     });
   }
 
+  private sanitizeLoanPayload(payload: any) {
+    const { id, userId, createdAt, updatedAt, ...rest } = payload || {};
+    return rest;
+  }
+
   async addLoan(userId: string, data: any) {
+    const sanitized = this.sanitizeLoanPayload(data);
     return prisma.loan.create({
       data: {
-        ...data,
+        ...sanitized,
         userId,
       },
     });
@@ -22,11 +28,14 @@ export class LoanService {
     const existing = await prisma.loan.findFirst({ where: { id, userId } });
     if (!existing) throw new AppError(404, 'LOAN_NOT_FOUND', 'Loan not found');
 
+    const sanitized = this.sanitizeLoanPayload(data);
+
     return prisma.loan.update({
       where: { id },
-      data,
+      data: sanitized,
     });
   }
+
 
   async deleteLoan(userId: string, id: string) {
     const existing = await prisma.loan.findFirst({ where: { id, userId } });
@@ -37,11 +46,15 @@ export class LoanService {
   }
 
   calculateEMI(principal: number, annualRate: number, tenureMonths: number): number {
-    if (annualRate === 0) return principal / tenureMonths;
+    if (!tenureMonths || tenureMonths <= 0 || !principal || principal <= 0) return 0;
+    if (!annualRate || annualRate <= 0) return principal / tenureMonths;
     const monthlyRate = annualRate / 12 / 100;
-    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / (Math.pow(1 + monthlyRate, tenureMonths) - 1);
-    return emi;
+    const denominator = Math.pow(1 + monthlyRate, tenureMonths) - 1;
+    if (denominator === 0) return principal / tenureMonths;
+    const emi = (principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths)) / denominator;
+    return Number.isFinite(emi) ? emi : 0;
   }
+
 
   async processUpcomingEMIs() {
     try {

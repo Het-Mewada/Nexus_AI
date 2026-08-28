@@ -2,20 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Wallet, TrendingUp, TrendingDown, PiggyBank, BarChart3, Receipt, Clock, Sparkles
+  Wallet, TrendingUp, TrendingDown, PiggyBank, BarChart3, Receipt, Clock, Sparkles, AlertTriangle
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis,
   YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { analyticsApi, aiApi } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { DashboardSummary, ChartData } from "@/types";
 import { AgentInsights } from "@/features/ai-advisor/components/AgentInsights";
+import { PageHeader } from "@/components/ui/page-header";
 
 const container = {
   hidden: { opacity: 0 },
@@ -60,6 +59,8 @@ export default function DashboardPage() {
 
   const d = dashboard as DashboardSummary | undefined;
   const c = charts as ChartData | undefined;
+  const currentDayOfMonth = new Date().getDate();
+  const dailyAverageSpending = (d?.monthlyExpenses || 0) / currentDayOfMonth;
 
   const { data: aiData, isLoading: aiLoading } = useQuery({
     queryKey: ["ai-insights"],
@@ -94,46 +95,40 @@ export default function DashboardPage() {
       value: d?.currentBalance || 0,
       icon: Wallet,
       trend: d?.currentBalance && d.currentBalance > 0 ? "up" : "down",
-      color: "from-indigo-500 to-purple-500",
-      bgColor: "bg-indigo-500/10",
-      textColor: "text-indigo-600 dark:text-indigo-400",
+      color: "from-primary to-primary",
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
     },
     {
       title: "Monthly Income",
       value: d?.monthlyIncome || 0,
       icon: TrendingUp,
-      color: "from-emerald-500 to-teal-500",
-      bgColor: "bg-emerald-500/10",
-      textColor: "text-emerald-600 dark:text-emerald-400",
+      color: "from-primary to-primary",
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
     },
     {
       title: "Monthly Expenses",
       value: d?.monthlyExpenses || 0,
       icon: TrendingDown,
-      color: "from-rose-500 to-pink-500",
-      bgColor: "bg-rose-500/10",
-      textColor: "text-rose-600 dark:text-rose-400",
+      color: "from-primary to-primary",
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
     },
     {
-      title: "Savings Rate",
-      value: d?.savingsRate || 0,
-      icon: PiggyBank,
-      trend: d?.savingsRate && d.savingsRate > 0 ? "up" : "down",
-      color: "from-amber-500 to-orange-500",
-      bgColor: "bg-amber-500/10",
-      textColor: "text-amber-600 dark:text-amber-400",
-      isSavings: true,
+      title: "Daily Avg. Spending",
+      value: dailyAverageSpending,
+      icon: TrendingDown,
+      color: "from-primary to-primary",
+      bgColor: "bg-primary/10",
+      textColor: "text-primary",
     },
   ];
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      {/* Header */}
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
       <motion.div variants={item}>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          Welcome back, <span className="gradient-text">{user?.name || "there"}</span> 👋
-        </h1>
-        <p className="text-muted-foreground mt-1">Here's your financial overview for this month.</p>
+        <PageHeader title="Dashboard" description={`Good to see you, ${user?.name || "there"}. A focused view of your cash flow, commitments, and the next decisions worth making.`} />
       </motion.div>
 
       {/* AI Financial Agent Insights */}
@@ -142,32 +137,35 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <motion.div key={stat.title} variants={item}>
-            <Card className="relative overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-2.5 rounded-xl ${stat.bgColor}`}>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <motion.div key={stat.title} variants={item} className="h-full">
+            <Card className="group relative h-full rounded-[18px] border border-border/80 bg-card shadow-sm transition-all duration-300 hover:border-primary/40 hover:shadow-md">
+              <CardContent className="flex h-full flex-col justify-between p-5 text-left md:p-6">
+                <div className="relative mb-4 flex w-full items-center justify-between">
+                  <div className={`p-3 rounded-2xl ${stat.bgColor}`}>
                     <stat.icon className={`h-5 w-5 ${stat.textColor}`} />
                   </div>
-                  {stat.isSavings ? (
-                    <Badge variant={stat.value >= 20 ? "success" : "warning"}>
-                      {stat.value.toFixed(1)}%
-                    </Badge>
-                  ) : null}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  {stat.isSavings ? (
-                    <div>
-                      <span className="text-2xl md:text-3xl font-bold">{stat.value.toFixed(1)}%</span>
-                      <Progress value={Math.min(100, stat.value)} className="mt-2 h-1.5" indicatorClassName={stat.value >= 20 ? "bg-emerald-500" : "bg-amber-500"} />
-                    </div>
-                  ) : (
-                    <AnimatedNumber value={stat.value} />
-                  )}
+                  <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {stat.title}
+                    {index === 0 && user?.initialBalance == null && (
+                      <span
+                        aria-label="Initial balance is not set. Set it in Settings, Profile, Initial Balance."
+                        tabIndex={0}
+                        className="group/initial-balance relative inline-flex cursor-help rounded-sm text-warning outline-none focus-visible:ring-2 focus-visible:ring-warning/40"
+                      >
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="pointer-events-none absolute left-0 top-full z-30 mt-2 hidden w-78 rounded-xl border border-warning/25 bg-popover px-3.5 py-3 text-left text-xs leading-relaxed text-popover-foreground shadow-xl group-hover/initial-balance:block group-focus-within/initial-balance:block">
+                          <span className="mb-1 block font-semibold text-warning">Initial balance needed</span>
+                          You have not set your initial balance (cash + bank). Add it to calculate current balance and future cash flow accurately.
+                          <span className="mt-1.5 block font-medium text-muted-foreground">Settings → Profile → Initial Balance</span>
+                        </span>
+                      </span>
+                    )}
+                  </p>
+                  <AnimatedNumber value={stat.value} />
                 </div>
               </CardContent>
             </Card>
@@ -175,8 +173,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
+
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.15fr_.85fr]">
         {/* Expense Category Pie Chart */}
         <motion.div variants={item}>
           <Card className="h-full">
@@ -207,7 +206,12 @@ export default function DashboardPage() {
                           <Cell key={entry.id} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
+                        labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}
+                        itemStyle={{ color: "var(--color-foreground)" }}
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="space-y-2 min-w-[140px]">
@@ -246,7 +250,12 @@ export default function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(0, 3)} />
                     <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
+                      labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}
+                      itemStyle={{ color: "var(--color-foreground)" }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
                     <Legend />
                     <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[4, 4, 0, 0]} />
@@ -262,7 +271,7 @@ export default function DashboardPage() {
 
       {/* AI Insights Widget */}
       <motion.div variants={item}>
-        <Card className="bg-gradient-to-br from-primary/5 via-background to-purple-500/5 border-primary/20">
+        <Card className="border-l-4 border-l-primary bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base text-primary">
               <Sparkles className="h-5 w-5" />
@@ -293,9 +302,9 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="space-y-6">
         {/* Recent Transactions */}
-        <motion.div variants={item} className="lg:col-span-2">
+        <motion.div variants={item}>
           <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -321,8 +330,9 @@ export default function DashboardPage() {
                       {displayedTransactions.slice(0, 5).map((tx) => (
                         <div key={tx.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors">
                           <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${tx.category.color}15` }}>
-                            <TrendingDown className="h-4 w-4" style={{ color: tx.category.color }} />
+                            <Receipt className="h-4 w-4" style={{ color: tx.category.color }} />
                           </div>
+
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{tx.merchant}</p>
                             <p className="text-xs text-muted-foreground">{tx.category.name} · {formatDate(tx.date)}</p>
@@ -349,7 +359,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Top Spending + Upcoming Bills */}
-        <motion.div variants={item} className="flex flex-col gap-6 h-full">
+        <motion.div variants={item} className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Top Spending */}
           <Card>
             <CardHeader>
@@ -375,7 +385,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Upcoming Bills */}
-          <Card className="flex-1">
+          <Card className="h-full">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Clock className="h-5 w-5 text-primary" />
@@ -433,7 +443,12 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(0, 3)} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
+                    labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}
+                    itemStyle={{ color: "var(--color-foreground)" }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
                   <Line type="monotone" dataKey="cashFlow" name="Cash Flow" stroke="#6366f1" strokeWidth={2.5} dot={{ r: 4, fill: "#6366f1" }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>

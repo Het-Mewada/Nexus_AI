@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Plus, TrendingDown, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown, Lock, Tag } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Edit, Trash2, Search, RefreshCw, Upload, X, ArrowUpDown, Lock, Tag, CalendarDays, LayoutGrid, List, Sparkles, Mic, Receipt, Filter } from "lucide-react";
+
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +16,18 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, DropdownMenuPortal } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { BalanceWarningCallout } from "@/components/ui/balance-warning-callout";
 import { expenseApi, categoryApi } from "@/services/api";
-import { formatCurrency, formatDate, paymentMethods, currencies } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, paymentMethods, currencies } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import type { Expense, Category } from "@/types";
+import { PageHeader, SectionHeading } from "@/components/ui/page-header";
+import { ActionTooltip } from "@/components/ui/tooltip";
+import { VoiceExpenseModal } from "./VoiceExpenseModal";
+
+
 
 const expenseSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
@@ -40,6 +45,7 @@ export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
 
   const currencySymbol = currencies.find(c => c.value === user?.currency)?.symbol || "₹";
@@ -51,6 +57,7 @@ export default function ExpensesPage() {
   const [filterTags, setFilterTags] = useLocalStorage("exp_filterTags", "");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<string>("manual");
+  const [viewMode, setViewMode] = useLocalStorage<"list" | "card">("exp_viewMode", "list");
   const [scanFile, setScanFile] = useState<File | null>(null);
   const debouncedSearch = useDebounce(search, 300);
   const debouncedTags = useDebounce(filterTags, 300);
@@ -182,177 +189,140 @@ export default function ExpensesPage() {
   const meta = data?.meta;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Expenses</h1>
-          <p className="text-muted-foreground mt-1">Track and manage your expenses</p>
-        </div>
-        <Button onClick={() => setIsOpen(true)} variant="gradient"><Plus className="h-4 w-4" /> Add Expense</Button>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by merchant, notes..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
-            </div>
-            <div className="relative flex-1">
-              <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Filter by tags (comma separated)..." value={filterTags} onChange={(e) => { setFilterTags(e.target.value); setPage(1); }} className="pl-9" />
-            </div>
-            <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v === "all" ? "" : v); setPage(1); }}>
-              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories?.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    <span className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                      {cat.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-[130px] justify-between text-sm h-10 px-3 py-2 bg-background border border-input ring-offset-background hover:bg-accent hover:text-accent-foreground font-normal text-left">
-                  <span className="capitalize">{sortBy}</span>
-                  <ArrowUpDown className="h-4 w-4 opacity-50 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40">
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("desc"); }}>Newest first</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("asc"); }}>Oldest first</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Amount</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("desc"); }}>Highest first</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("asc"); }}>Lowest first</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>Merchant</DropdownMenuSubTrigger>
-                  <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("asc"); }}>A-Z</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("desc"); }}>Z-A</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuPortal>
-                </DropdownMenuSub>
-              </DropdownMenuContent>
-            </DropdownMenu>
+    <div className="space-y-8">
+      <PageHeader
+        title="Expenses"
+        description="A clear record of where your money went, with enough context to act on it."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => setIsVoiceModalOpen(true)}
+              variant="outline"
+              className="gap-2 border-primary/30 text-primary hover:bg-primary/10 shadow-sm"
+            >
+              <Sparkles className="h-4 w-4 text-primary" /> Voice Assistant
+            </Button>
+            <Button onClick={() => setIsOpen(true)} variant="gradient">
+              <Plus className="h-4 w-4" /> Add expense
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
-      {/* Expense List */}
-      {isLoading ? (
-        <div className="space-y-3">{[...Array(5)].map((_, i) => (<Card key={i} className="animate-pulse"><CardContent className="p-4"><div className="h-16 bg-muted rounded" /></CardContent></Card>))}</div>
-      ) : expenses.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <TrendingDown className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <h3 className="text-lg font-semibold">No expenses</h3>
-            <p className="text-muted-foreground text-sm mt-1">Add your first expense to start tracking</p>
-            <Button onClick={() => setIsOpen(true)} variant="gradient" className="mt-4"><Plus className="h-4 w-4" /> Add Expense</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {expenses.map((expense, i) => (
-            <motion.div key={expense.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${expense.category?.color || '#6366f1'}15` }}>
-                      <TrendingDown className="h-5 w-5" style={{ color: expense.category?.color || '#6366f1' }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium truncate">{expense.merchant}</p>
-                        <Badge variant="outline" className="text-xs" style={{ borderColor: expense.category?.color, color: expense.category?.color }}>
-                          {expense.category?.name}
-                        </Badge>
-                        {expense.isAutoSynced && (
-                          <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-500 border-indigo-500/20 flex items-center gap-1 font-medium">
-                            <Lock className="h-3 w-3" /> Auto-Synced
-                          </Badge>
-                        )}
-                        {expense.tags.length > 0 && expense.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{formatDate(expense.date)} · {paymentMethods.find((m) => m.value === expense.paymentMethod)?.label || expense.paymentMethod}</p>
-                    </div>
-                    <span className="text-lg font-bold text-rose-500">-{formatCurrency(Number(expense.amount))}</span>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleEdit(expense)}
-                        disabled={expense.isAutoSynced}
-                        title={expense.isAutoSynced ? "Synced records cannot be edited directly" : "Edit"}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_250px]">
+        <section className="min-w-0 space-y-5">
+          <div className="rounded-[16px] border border-border/80 bg-card p-3 shadow-[0_1px_2px_hsl(155_20%_10%/0.03)]">
+            <div className="grid gap-2 md:grid-cols-[minmax(180px,1.5fr)_minmax(160px,1fr)_150px_132px]">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input aria-label="Search expenses" placeholder="Search merchant or notes" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="border-transparent bg-secondary/60 pl-10 focus:bg-card" />
+              </div>
+              <div className="relative">
+                <Tag className="absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input aria-label="Filter by tags" placeholder="Filter by tags" value={filterTags} onChange={(e) => { setFilterTags(e.target.value); setPage(1); }} className="border-transparent bg-secondary/60 pl-10 focus:bg-card" />
+              </div>
+              <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v === "all" ? "" : v); setPage(1); }}>
+                <SelectTrigger className="border-transparent bg-secondary/60"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent><SelectItem value="all">All categories</SelectItem>{categories?.map((cat) => <SelectItem key={cat.id} value={cat.id}><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />{cat.name}</span></SelectItem>)}</SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="justify-between border-transparent bg-secondary/60 px-3 font-medium">
+                    <span className="capitalize">{sortBy}</span>
+                    <ArrowUpDown className="h-4 w-4 opacity-60" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+
+                <DropdownMenuContent className="w-44">
+                  <DropdownMenuSub><DropdownMenuSubTrigger>Date</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent><DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("desc"); }}>Newest first</DropdownMenuItem><DropdownMenuItem onClick={() => { setSortBy("date"); setSortOrder("asc"); }}>Oldest first</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
+                  <DropdownMenuSub><DropdownMenuSubTrigger>Amount</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent><DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("desc"); }}>Highest first</DropdownMenuItem><DropdownMenuItem onClick={() => { setSortBy("amount"); setSortOrder("asc"); }}>Lowest first</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
+                  <DropdownMenuSub><DropdownMenuSubTrigger>Merchant</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent><DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("asc"); }}>A–Z</DropdownMenuItem><DropdownMenuItem onClick={() => { setSortBy("merchant"); setSortOrder("desc"); }}>Z–A</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <SectionHeading title="Recent activity" description={meta?.total ? `${meta.total} recorded expenses` : "Your latest spending activity"} />
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              aria-label={viewMode === "list" ? "Switch to card view" : "Switch to list view"}
+              aria-pressed={viewMode === "card"}
+              onClick={() => setViewMode(viewMode === "list" ? "card" : "list")}
+            >
+              {viewMode === "list" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+              <span className="hidden sm:inline">{viewMode === "list" ? "Card view" : "List view"}</span>
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="divide-y overflow-hidden rounded-[16px] border border-border/80 bg-card">{[...Array(5)].map((_, i) => <div key={i} className="flex animate-pulse items-center gap-4 p-5"><div className="h-10 w-10 rounded-[10px] bg-muted" /><div className="flex-1 space-y-2"><div className="h-3 w-1/3 rounded bg-muted" /><div className="h-3 w-1/4 rounded bg-muted" /></div><div className="h-4 w-20 rounded bg-muted" /></div>)}</div>
+          ) : expenses.length === 0 ? (
+            <div className="flex min-h-[340px] flex-col items-center justify-center rounded-[16px] border border-dashed border-border bg-card px-6 text-center"><div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[12px] bg-primary/10 text-primary"><Receipt className="h-5 w-5" /></div><h3 className="text-lg font-bold">No expenses match this view</h3><p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">Add your first expense or clear a filter to see activity here.</p><Button onClick={() => setIsOpen(true)} variant="gradient" className="mt-5"><Plus className="h-4 w-4" /> Add expense</Button></div>
+          ) : (
+            <div className={cn(viewMode === "card" ? "grid gap-3 sm:grid-cols-3" : "divide-y overflow-hidden rounded-[16px] border border-border/80 bg-card")}>
+              {expenses.map((expense, i) => (
+                <motion.div key={expense.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.035 }} className={cn("group flex gap-4 transition-colors hover:bg-secondary/35", viewMode === "card" ? "flex-col rounded-[16px] border border-border/80 bg-card p-4" : "flex-wrap items-center px-4 py-4 sm:px-5")}>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px]" style={{ backgroundColor: `${expense.category?.color || '#ef6c3c'}18` }}><Tag className="h-4 w-4" style={{ color: expense.category?.color || '#ef6c3c' }} /></div>
+                    {viewMode === "card" && <span className="ml-auto font-mono text-sm font-semibold text-destructive">−{formatCurrency(Number(expense.amount))}</span>}
+                  </div>
+
+                  <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="truncate font-semibold">{expense.merchant}</p><Badge variant="outline" className="text-[10px]" style={{ borderColor: expense.category?.color, color: expense.category?.color }}>{expense.category?.name}</Badge>{expense.isAutoSynced && <Badge variant="outline" className="gap-1 text-[10px] text-muted-foreground"><Lock className="h-3 w-3" /> Synced</Badge>}</div><p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" /> {formatDate(expense.date)} <span>·</span> {paymentMethods.find((m) => m.value === expense.paymentMethod)?.label || expense.paymentMethod}</p></div>
+                  <div className={cn("flex items-center gap-2", viewMode === "card" ? "justify-end border-t border-border/70 pt-3" : "ml-auto")}>
+                    <span className={cn("min-w-[96px] text-right font-mono text-sm font-medium text-destructive", viewMode === "card" && "hidden")}>
+                      −{formatCurrency(Number(expense.amount))}
+                    </span>
+                    <div className="flex opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      {expense.isAutoSynced ? (
+                        <ActionTooltip content="Auto-synced records cannot be edited directly">
+                          <span className="inline-block cursor-not-allowed">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 pointer-events-none" disabled>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </span>
+                        </ActionTooltip>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(expense)} title="Edit">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
 
                       {expense.isAutoSynced ? (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-amber-500" title="Auto-synced record (Non-deleteable)">
+                        <ActionTooltip content="Auto-synced records cannot be deleted">
+                          <span className="inline-block cursor-not-allowed">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 pointer-events-none" disabled>
                               <Lock className="h-4 w-4" />
                             </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2 text-amber-500">
-                                <Lock className="h-5 w-5" /> Non-Deleteable Record
-                              </DialogTitle>
-                              <DialogDescription className="pt-2 text-sm leading-relaxed">
-                                This expense entry was automatically created from a shared group wallet deposit, bill, or subscription. Auto-synced entries cannot be deleted or modified directly from personal expenses.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <DialogClose asChild>
-                                <Button variant="outline">Understood</Button>
-                              </DialogClose>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                          </span>
+                        </ActionTooltip>
                       ) : (
                         <ConfirmDeleteDialog title="Delete Expense" onConfirm={() => deleteMutation.mutate(expense.id)}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </ConfirmDeleteDialog>
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-          {meta && meta.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-4">
-              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
-              <span className="text-sm text-muted-foreground">Page {meta.page} of {meta.totalPages}</span>
-              <Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+
+                </motion.div>
+              ))}
             </div>
           )}
-        </div>
-      )}
+          {meta && meta.totalPages > 1 && <div className="flex items-center justify-center gap-3 pt-2"><Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button><span className="font-mono text-xs text-muted-foreground">{meta.page} / {meta.totalPages}</span><Button variant="outline" size="sm" disabled={page >= meta.totalPages} onClick={() => setPage(page + 1)}>Next</Button></div>}
+        </section>
+
+        <aside className="space-y-4 xl:sticky xl:top-6">
+          <div className="rounded-[16px] border border-border/80 bg-primary p-5 text-primary-foreground"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground/60">This view</p><p className="mt-3 font-display text-4xl font-extrabold tracking-[-0.06em]">{meta?.total ?? expenses.length}</p><p className="mt-1 text-sm text-primary-foreground/70">expenses recorded</p><div className="mt-6 border-t border-primary-foreground/15 pt-4 text-xs text-primary-foreground/65">Use filters to narrow the list without losing your current sort.</div></div>
+          <div className="rounded-[16px] border border-border/80 bg-card p-5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Quick note</p><p className="mt-3 text-sm leading-6 text-muted-foreground">Receipts can be scanned from the add expense flow and reviewed before saving.</p><Button variant="link" className="mt-2 h-auto p-0 text-primary" onClick={() => { setActiveTab("scan"); setIsOpen(true); }}>Open scan flow <span aria-hidden="true">→</span></Button></div>
+
+        </aside>
+      </div>
 
       {/* Add/Edit Dialog */}
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
@@ -362,15 +332,17 @@ export default function ExpensesPage() {
             <DialogDescription>{editing ? "Update expense details" : "Record a new expense"}</DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-2">
+          <div className="w-full mt-2">
             {!editing && (
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-                <TabsTrigger value="scan">Scan Receipt</TabsTrigger>
-              </TabsList>
+              <div className="mb-4 grid w-full grid-cols-2 rounded-[12px] border border-border/80 bg-secondary/60 p-1">
+                <button type="button" onClick={() => setActiveTab("manual")} className={cn("rounded-[9px] px-2 py-2 text-xs sm:text-sm font-semibold transition-colors", activeTab === "manual" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Manual entry</button>
+                <button type="button" onClick={() => setActiveTab("scan")} className={cn("rounded-[9px] px-2 py-2 text-xs sm:text-sm font-semibold transition-colors", activeTab === "scan" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>Scan receipt</button>
+              </div>
             )}
 
-            <TabsContent value="manual" className="space-y-4">
+
+
+            {activeTab === "manual" && <div className="space-y-4">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -448,9 +420,9 @@ export default function ExpensesPage() {
                   </Button>
                 </DialogFooter>
               </form>
-            </TabsContent>
+            </div>}
 
-            <TabsContent value="scan" className="space-y-4">
+            {activeTab === "scan" && <div className="space-y-4">
               <div className="text-center space-y-4 py-8">
                 <p className="text-sm text-muted-foreground">
                   Upload a receipt and let AI extract the expense details automatically.
@@ -492,10 +464,17 @@ export default function ExpensesPage() {
                   {scanMutation.isPending ? "Analyzing receipt..." : "Scan Receipt"}
                 </Button>
               </DialogFooter>
-            </TabsContent>
-          </Tabs>
+            </div>}
+          </div>
         </DialogContent>
       </Dialog>
+
+      {/* Voice Assistant / Natural Input Modal */}
+      <VoiceExpenseModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+      />
     </div>
   );
 }
+

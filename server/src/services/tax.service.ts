@@ -85,16 +85,16 @@ export class TaxService {
     const existing = await prisma.taxProfile.findFirst({ where: { id, userId } });
     if (!existing) throw new AppError(404, 'TAX_PROFILE_NOT_FOUND', 'Tax profile not found');
 
-    const isNewRegime = (data.taxRegime || existing.taxRegime) === 'NEW';
     const finalData = { ...data };
+    const regimeSwitchingToNew = data.taxRegime === 'NEW' && existing.taxRegime !== 'NEW';
     
-    if (isNewRegime) {
+    if (regimeSwitchingToNew) {
       finalData.hra = 0;
       finalData.lta = 0;
       finalData.medical80d = 0;
       finalData.investments80c = 0;
       finalData.nps80ccd = 0;
-    } else {
+    } else if ((data.taxRegime || existing.taxRegime) === 'OLD') {
       if (finalData.investments80c !== undefined) finalData.investments80c = Math.min(150000, finalData.investments80c);
       if (finalData.nps80ccd !== undefined) finalData.nps80ccd = Math.min(50000, finalData.nps80ccd);
     }
@@ -103,6 +103,7 @@ export class TaxService {
       where: { id },
       data: finalData,
     });
+
   }
 
   async delete(id: string, userId: string) {

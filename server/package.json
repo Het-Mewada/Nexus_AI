@@ -13,8 +13,10 @@
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
     "db:clean": "tsx prisma/clean-seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "clear:user-data": "tsx src/scripts/clearUserData.ts"
   },
+
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },

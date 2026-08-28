@@ -66,11 +66,8 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 export const paymentMethods = [
   { value: "cash", label: "Cash" },
-  { value: "credit_card", label: "Credit Card" },
   { value: "debit_card", label: "Debit Card" },
   { value: "upi", label: "UPI" },
-  { value: "net_banking", label: "Net Banking" },
-  { value: "wallet", label: "Wallet" },
   { value: "other", label: "Other" },
 ] as const;
 

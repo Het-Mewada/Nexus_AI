@@ -203,8 +203,9 @@ export class SmartSavingsService {
         reason: s.decisionReason,
         mood: s.mood,
         difficulty: s.difficulty,
-        category: s.category.name
+        category: s.category?.name || 'Uncategorized'
       })))}
+
       
       Generate 3 highly personalized, encouraging, and highly specific insights (e.g. "You resist food temptations well", "You tend to save most when your mood is X", "Your habit of skipping cafes will save you X over 5 years").
       Format as a JSON array of 3 string sentences.
@@ -212,9 +213,13 @@ export class SmartSavingsService {
 
     try {
       const response = await aiService.generateText(prompt);
-      const cleaned = response.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(cleaned);
+      const jsonMatch = response.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return JSON.parse(response);
     } catch (error) {
+
       console.error('Failed to generate AI insights:', error);
       return [
         `You have saved ₹${analytics.overview.totalSaved} through sheer discipline!`,

@@ -70,8 +70,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — gradient */}
-      <div className="hidden lg:flex lg:flex-1 gradient-bg relative overflow-hidden">
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:flex-1 bg-primary relative overflow-hidden">
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -80,8 +80,8 @@ export default function LoginPage() {
             className="text-center"
           >
             <div className="flex items-center justify-center mb-8">
-              <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl font-bold">
-                N
+              <div className="h-16 w-16 rounded-[18px] bg-accent flex items-center justify-center text-3xl font-extrabold">
+                n
               </div>
             </div>
             <h1 className="text-4xl font-bold mb-4">Nexus AI</h1>
@@ -90,9 +90,8 @@ export default function LoginPage() {
             </p>
           </motion.div>
           {/* Decorative circles */}
-          <div className="absolute top-20 -left-20 h-60 w-60 rounded-full bg-white/5 blur-sm" />
-          <div className="absolute bottom-20 -right-10 h-40 w-40 rounded-full bg-white/10 blur-sm" />
-          <div className="absolute top-1/2 left-1/4 h-24 w-24 rounded-full bg-white/5" />
+          <div className="absolute inset-x-12 bottom-16 h-px bg-white/15" />
+          <div className="absolute left-12 bottom-12 text-[11px] uppercase tracking-[0.22em] text-white/45">Personal finance, with perspective</div>
         </div>
       </div>
 
@@ -105,8 +104,8 @@ export default function LoginPage() {
           className="w-full max-w-md space-y-8"
         >
           <div className="lg:hidden flex items-center gap-3 justify-center mb-4">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center font-bold">
-              N
+            <div className="h-10 w-10 rounded-[11px] bg-accent text-white flex items-center justify-center font-extrabold">
+              n
             </div>
             <span className="text-2xl font-bold gradient-text">Nexus AI</span>
           </div>

@@ -10,6 +10,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    force: true,
+    include: ['jspdf', 'pptxgenjs', 'xlsx'],
+  },
   server: {
     host: true,
     port: 5173,
@@ -59,4 +63,3 @@ export default defineConfig({
     },
   },
 })
-

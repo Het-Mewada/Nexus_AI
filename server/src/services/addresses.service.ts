@@ -34,10 +34,17 @@ export class AddressesService {
     return address;
   }
 
+  private sanitizeAddressPayload(payload: any) {
+    const { id, userId, createdAt, updatedAt, ...rest } = payload || {};
+    return rest;
+  }
+
+
   async createAddress(userId: string, data: any) {
+    const sanitized = this.sanitizeAddressPayload(data);
     return prisma.address.create({
       data: {
-        ...data,
+        ...sanitized,
         userId,
       },
     });
@@ -45,11 +52,13 @@ export class AddressesService {
 
   async updateAddress(userId: string, id: string, data: any) {
     const address = await this.getAddress(userId, id);
+    const sanitized = this.sanitizeAddressPayload(data);
     return prisma.address.update({
       where: { id: address.id },
-      data,
+      data: sanitized,
     });
   }
+
 
   async deleteAddress(userId: string, id: string) {
     const address = await this.getAddress(userId, id);

@@ -56,6 +56,12 @@ export class MarketService {
 
   async getChart(symbol: string, interval: '1d' | '1wk' | '1mo' | '5m' = '1d', range: string = '1y') {
     try {
+      // Intraday intervals (5m) only support short ranges (max 7d)
+      let effectiveRange = range;
+      if (interval === '5m' && ['1y', '5y', '6mo', '1mo'].includes(range)) {
+        effectiveRange = '5d';
+      }
+
       const rangeMap: Record<string, number> = {
         '1d': 1 * 24 * 60 * 60 * 1000,
         '5d': 5 * 24 * 60 * 60 * 1000,
@@ -65,10 +71,11 @@ export class MarketService {
         '5y': 5 * 365 * 24 * 60 * 60 * 1000,
       };
       
-      const period1 = new Date(Date.now() - (rangeMap[range] || rangeMap['1y'])).toISOString();
+      const period1 = new Date(Date.now() - (rangeMap[effectiveRange] || rangeMap['1y'])).toISOString();
       const queryOptions: any = { interval, period1 };
       
       const chartData = await yahooFinance.chart(symbol, queryOptions);
+
       
       // Transform data into the format expected by the frontend
       // The frontend currently expects data.quotes and data.timestamp

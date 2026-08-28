@@ -1,9 +1,6 @@
 import { prisma } from '../config/database';
-import { GoogleGenAI } from '@google/genai';
-import { env } from '../config/env';
 import { logger } from '../utils/logger';
-
-const ai = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+import { llmFallbackService } from './llm-fallback.service';
 
 export class ConversationService {
   /**
@@ -175,29 +172,17 @@ RULES:
 - CRITICAL DIRECTIVE: Be completely RAW, direct, candid, and blunt. Do NOT sugarcoat or butter up anything. Say what is strictly correct, real, and factual without pleasantries or fluff.`;
 
     try {
-      const rawContents = [
-        { role: 'user' as const, parts: [{ text: systemPrompt }] },
-        { role: 'model' as const, parts: [{ text: 'Understood. I have full access to your financial data and our conversation history. How can I help you today?' }] },
-        ...geminiHistory,
-        { role: 'user' as const, parts: [{ text: userMessage }] },
-      ];
+      const historyMessages = validMessages.map((m) => ({
+        role: m.role as 'user' | 'assistant' | 'model',
+        content: m.content,
+      }));
 
-      // Collapse consecutive roles to satisfy Gemini's strict alternation requirement
-      const collapsedContents: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
-      for (const msg of rawContents) {
-        if (collapsedContents.length > 0 && collapsedContents[collapsedContents.length - 1].role === msg.role) {
-          collapsedContents[collapsedContents.length - 1].parts[0].text += `\n\n${msg.parts[0].text}`;
-        } else {
-          collapsedContents.push(msg);
-        }
-      }
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: collapsedContents,
+      const aiContent = await llmFallbackService.generateResponse({
+        systemPrompt,
+        messages: historyMessages,
+        userMessage,
+        financialContext,
       });
-
-      const aiContent = response.text || "I'm sorry, I couldn't process your request right now.";
 
       // Save AI response
       const savedAiMsg = await prisma.aiMessage.create({
@@ -212,11 +197,11 @@ RULES:
       if (conversation.messages.length === 0) {
         const titlePrompt = `Generate a concise 3-6 word title for this financial conversation. The user said: "${userMessage}". Respond with ONLY the title, no quotes.`;
         try {
-          const titleRes = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: titlePrompt,
+          const generatedTitleRaw = await llmFallbackService.generateResponse({
+            systemPrompt: "You are a concise title generator. Respond ONLY with a 3-6 word title without quotes or markdown formatting.",
+            userMessage: titlePrompt,
           });
-          const generatedTitle = titleRes.text?.trim().slice(0, 100) || 'Financial Advice';
+          const generatedTitle = generatedTitleRaw.trim().replace(/^["']|["']$/g, '').slice(0, 100) || 'Financial Advice';
           await prisma.aiConversation.update({
             where: { id: conversationId },
             data: { title: generatedTitle },
@@ -237,20 +222,25 @@ RULES:
         aiMessage: savedAiMsg,
       };
     } catch (error: any) {
-      logger.error('Error in conversation AI', { message: error.message, conversationId });
+      logger.error('Unexpected error in conversation service', { message: error.message, conversationId });
       
-      // Save error message so user sees feedback
-      const errorMsg = await prisma.aiMessage.create({
+      // Even if DB or runtime throws, generate local fallback content so response never fails
+      const fallbackContent = await llmFallbackService.generateResponse({
+        userMessage,
+        financialContext,
+      });
+
+      const fallbackMsg = await prisma.aiMessage.create({
         data: {
           conversationId,
           role: 'assistant',
-          content: 'I\'m temporarily unable to respond. The AI service is overloaded — please try again in a moment.',
+          content: fallbackContent,
         },
       });
 
       return {
         userMessage: savedUserMsg,
-        aiMessage: errorMsg,
+        aiMessage: fallbackMsg,
       };
     }
   }

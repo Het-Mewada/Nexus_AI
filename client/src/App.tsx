@@ -50,6 +50,8 @@ const FeedbackPage = lazy(() => import("@/features/feedback/FeedbackPage"));
 const AdminDashboardPage = lazy(() => import("@/features/admin/AdminDashboardPage"));
 const GlobalFeedbackPage = lazy(() => import("@/features/admin/GlobalFeedbackPage"));
 const FeatureFlagsPage = lazy(() => import("@/features/admin/FeatureFlagsPage"));
+const DataClearPage = lazy(() => import("@/features/admin/DataClearPage"));
+
 
 // Error pages
 const NotFoundPage = lazy(() => import("@/features/error/NotFoundPage"));
@@ -146,6 +148,8 @@ export default function App() {
                     <Route path="/admin" element={<AdminGuard><AdminDashboardPage /></AdminGuard>} />
                     <Route path="/admin/feedback" element={<AdminGuard><GlobalFeedbackPage /></AdminGuard>} />
                     <Route path="/admin/features" element={<AdminGuard><FeatureFlagsPage /></AdminGuard>} />
+                    <Route path="/admin/data-clear" element={<AdminGuard><DataClearPage /></AdminGuard>} />
+
                   </Route>
 
                   {/* Catch all */}

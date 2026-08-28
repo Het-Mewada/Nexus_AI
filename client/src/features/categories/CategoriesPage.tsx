@@ -34,6 +34,7 @@ export default function CategoriesPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [selectedColor, setSelectedColor] = useState("#6366f1");
+  const [hasSelectedColor, setHasSelectedColor] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CategoryForm>({
@@ -72,7 +73,12 @@ export default function CategoriesPage() {
     onError: (err: any) => toast.error(err.response?.data?.error?.message || "Failed to delete"),
   });
 
-  const handleClose = () => { setIsOpen(false); setEditing(null); setSelectedColor("#6366f1"); reset(); };
+  const colorConflict = useMemo(() => {
+    if (!categories || !selectedColor) return undefined;
+    return categories.find((cat) => cat.color.toLowerCase() === selectedColor.toLowerCase() && cat.id !== editing?.id);
+  }, [categories, selectedColor, editing]);
+
+  const handleClose = () => { setIsOpen(false); setEditing(null); setSelectedColor("#6366f1"); setHasSelectedColor(false); reset(); };
 
   const handleEdit = (cat: Category) => {
     setEditing(cat);
@@ -80,10 +86,17 @@ export default function CategoriesPage() {
     setValue("color", cat.color);
     setValue("icon", cat.icon);
     setSelectedColor(cat.color);
+    setHasSelectedColor(false);
     setIsOpen(true);
   };
 
   const onSubmit = (formData: CategoryForm) => {
+    if (!editing && colorConflict) {
+      toast.warning("Choose a different category color", {
+        description: `This color is already used by ${colorConflict.name}.`,
+      });
+      return;
+    }
     const payload = { ...formData, color: selectedColor };
     if (editing) {
       updateMutation.mutate({ id: editing.id, data: payload });
@@ -93,9 +106,9 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col border-b border-border/80 pb-7 md:flex-row md:items-end justify-between gap-5">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Categories</h1>
@@ -165,13 +178,6 @@ export default function CategoriesPage() {
                 <div className="group relative flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card/60 hover:bg-card hover:border-border hover:shadow-sm transition-all duration-200 min-h-[64px]">
                   {/* Category Info */}
                   <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
-                    <div
-                      className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
-                      style={{ backgroundColor: `${cat.color}18` }}
-                    >
-                      <Tag className="h-4.5 w-4.5" style={{ color: cat.color }} />
-                    </div>
-
                     <div className="min-w-0 flex-1">
                       <h3 className="font-semibold text-sm text-foreground leading-tight group-hover:text-primary transition-colors">
                         {cat.name}
@@ -195,11 +201,11 @@ export default function CategoriesPage() {
                         Default
                       </span>
                     ) : (
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-ring/30"
                           onClick={() => handleEdit(cat)}
                           title="Edit category"
                         >
@@ -212,7 +218,7 @@ export default function CategoriesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            className="h-7 w-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/30"
                             title="Delete category"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -249,10 +255,9 @@ export default function CategoriesPage() {
                   <button
                     key={color}
                     type="button"
-                    onClick={() => setSelectedColor(color)}
-                    className={`h-7 w-7 rounded-full transition-all ${
-                      selectedColor === color ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110" : "hover:scale-105 opacity-80 hover:opacity-100"
-                    }`}
+                    onClick={() => { setSelectedColor(color); setHasSelectedColor(true); }}
+                    className={`h-7 w-7 rounded-full transition-all ${selectedColor === color ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110" : "hover:scale-105 opacity-80 hover:opacity-100"
+                      }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
@@ -262,11 +267,16 @@ export default function CategoriesPage() {
                 <input
                   type="color"
                   value={selectedColor}
-                  onChange={(e) => setSelectedColor(e.target.value)}
+                  onChange={(e) => { setSelectedColor(e.target.value); setHasSelectedColor(true); }}
                   className="h-7 w-10 cursor-pointer rounded border-0 bg-transparent"
                 />
                 <span className="text-xs font-mono text-muted-foreground">{selectedColor}</span>
               </div>
+              {!editing && hasSelectedColor && colorConflict && (
+                <p role="alert" className="rounded-[10px] border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+                  This color is already used by <span className="font-semibold">{colorConflict.name}</span>. Choose another color before creating this category to avoid unnecessary confusion later.
+                </p>
+              )}
             </div>
 
             <DialogFooter className="pt-2">

@@ -179,10 +179,21 @@ export class FamilyService {
 
       if (data.type === 'DEPOSIT') {
         let category = await tx.category.findFirst({
-          where: { name: { in: ["Family", "Transfer", "Transfers", "Other"] } }
+          where: { userId, name: { in: ["Family", "Transfer", "Transfers", "Other"] } }
         });
         if (!category) {
-          category = await tx.category.findFirst();
+          category = await tx.category.findFirst({ where: { userId } });
+        }
+        if (!category) {
+          category = await tx.category.create({
+            data: {
+              userId,
+              name: 'Family & Transfers',
+              color: '#8b5cf6',
+              icon: 'users',
+              isDefault: false
+            }
+          });
         }
 
         if (category) {
@@ -200,6 +211,7 @@ export class FamilyService {
             }
           });
         }
+
       } else if (data.type === 'WITHDRAWAL') {
         await tx.income.create({
           data: {

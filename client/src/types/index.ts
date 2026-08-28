@@ -242,8 +242,13 @@ export interface Document {
   name: string;
   title: string;
   type: string;
-  fileUrl: string;
+  fileUrl: string | null;
   filePath: string;
+  isEncrypted?: boolean;
+  isProtected?: boolean;
+  protectionMethod?: 'LOGIN_PASSWORD' | 'CUSTOM_PASSWORD' | null;
+  enableBiometrics?: boolean;
+  tags?: string[];
   createdAt: string;
 }
 
@@ -522,3 +527,28 @@ export interface FeedbackReply {
     role: string;
   };
 }
+
+export interface FieldExtraction<T = any> {
+  value: T | null;
+  confidence: number;
+  source: 'explicit' | 'inferred' | 'missing' | 'explicit_relative' | 'explicit_date' | 'context';
+  raw?: string | null;
+}
+
+export interface ExtractedVoiceExpense {
+  raw_transcript: string;
+  fields: {
+    amount: FieldExtraction<number>;
+    currency: FieldExtraction<string>;
+    category: FieldExtraction<string>;
+    categoryId?: FieldExtraction<string | null>;
+    merchant: FieldExtraction<string>;
+    description: FieldExtraction<string>;
+    date: FieldExtraction<string>;
+    payment_method: FieldExtraction<'cash' | 'debit_card' | 'upi' | 'other'>;
+    notes: FieldExtraction<string>;
+  };
+  overall_confidence: number;
+  explanation?: string | null;
+}
+

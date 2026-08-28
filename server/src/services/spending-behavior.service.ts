@@ -28,7 +28,8 @@ export class SpendingBehaviorService {
         date: e.date.toISOString().split('T')[0],
         merchant: e.merchant,
         amount: Number(e.amount),
-        category: e.category.name,
+        category: e.category?.name || 'Uncategorized',
+
         isRecurring: e.isRecurring,
       }));
 

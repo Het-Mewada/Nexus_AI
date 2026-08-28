@@ -50,25 +50,47 @@ export async function authMiddleware(
       return;
     }
 
-    let dbUser = await prisma.user.findUnique({
-      where: { supabaseId: supabaseUser.id },
+    let dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { supabaseId: supabaseUser.id },
+          { email: supabaseUser.email!.toLowerCase() },
+        ],
+      },
     });
 
     if (!dbUser) {
       dbUser = await prisma.user.create({
         data: {
           supabaseId: supabaseUser.id,
-          email: supabaseUser.email!,
+          email: supabaseUser.email!.toLowerCase(),
           name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
           avatarUrl: supabaseUser.user_metadata?.avatar_url || null,
         },
       });
 
-      await prisma.userSettings.create({
-        data: { userId: dbUser.id },
+      await prisma.userSettings.upsert({
+        where: { userId: dbUser.id },
+        create: { userId: dbUser.id },
+        update: {},
       });
 
       logger.info(`New user synced: ${dbUser.email}`);
+    } else if (dbUser.supabaseId !== supabaseUser.id) {
+      dbUser = await prisma.user.update({
+        where: { id: dbUser.id },
+        data: { supabaseId: supabaseUser.id },
+      });
+    }
+
+    // Ensure settings exist for the user
+    const existingSettings = await prisma.userSettings.findUnique({
+      where: { userId: dbUser.id },
+    });
+    if (!existingSettings) {
+      await prisma.userSettings.create({
+        data: { userId: dbUser.id },
+      });
     }
 
     if (dbUser.deletedAt) {
@@ -102,14 +124,29 @@ export async function authMiddleware(
     };
 
     next();
-  } catch (err) {
-    logger.error("Auth middleware error:", err);
+  } catch (err: any) {
+    logger.error("Auth middleware error:", err?.message || err, err?.stack);
     res.status(500).json({
       success: false,
       error: {
         code: "INTERNAL_ERROR",
-        message: "Authentication failed",
+        message: err?.message || "Authentication failed",
       },
     });
   }
 }
+
+
+export async function optionalAuthMiddleware(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authMiddleware(req, res, next);
+  }
+  next();
+}
+
+

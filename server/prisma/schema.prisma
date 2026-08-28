@@ -42,6 +42,7 @@ model User {
   insurances     Insurance[]
   taxProfiles    TaxProfile[]
   documents      Document[]
+  passkeys       UserPasskey[]
   groupMembers   GroupMember[]
   watchlists     Watchlist[]
   contacts       Contact[]
@@ -122,6 +123,7 @@ model Expense {
   id            String    @id @default(uuid())
   userId        String    @map("user_id")
   categoryId    String    @map("category_id")
+  billId        String?   @map("bill_id")
   amount        Decimal   @db.Decimal(12, 2)
   merchant      String
   date          DateTime
@@ -139,12 +141,14 @@ model Expense {
   updatedAt       DateTime  @updatedAt @map("updated_at")
   deletedAt       DateTime? @map("deleted_at")
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category  @relation(fields: [categoryId], references: [id])
+  bill     Bill?     @relation(fields: [billId], references: [id], onDelete: SetNull)
 
   @@index([userId, date])
   @@index([userId, categoryId])
   @@index([userId, merchant])
+  @@index([userId, billId])
   @@map("expenses")
 }
 
@@ -244,10 +248,12 @@ model Bill {
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id])
+  expenses Expense[]
 
   @@index([userId, dueDate])
   @@map("bills")
 }
+
 
 model Subscription {
   id           String    @id @default(uuid())
@@ -412,22 +418,43 @@ model TaxProfile {
 }
 
 model Document {
-  id              String    @id @default(uuid())
-  userId          String    @map("user_id")
-  name            String
-  title           String    @default("")
-  type            String    // PAN, AADHAAR, STATEMENT, INSURANCE_POLICY, TAX_RETURN
-  filePath        String    @map("file_path") // Storage path
-  fileUrl         String?   @map("file_url") // Public URL
-  isEncrypted     Boolean   @default(true) @map("is_encrypted")
-  tags            String[]  @default([])
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  name               String
+  title              String    @default("")
+  type               String    // PAN, AADHAAR, STATEMENT, INSURANCE_POLICY, TAX_RETURN
+  filePath           String    @map("file_path") // Storage path
+  fileUrl            String?   @map("file_url") // Public URL (null if protected)
+  isEncrypted        Boolean   @default(false) @map("is_encrypted")
+  isProtected        Boolean   @default(false) @map("is_protected")
+  protectionMethod   String?   @map("protection_method") // LOGIN_PASSWORD, CUSTOM_PASSWORD
+  customPasswordHash String?   @map("custom_password_hash")
+  enableBiometrics   Boolean   @default(false) @map("enable_biometrics")
+  encryptionIv       String?   @map("encryption_iv")
+  encryptionAuthTag  String?   @map("encryption_auth_tag")
+  tags               String[]  @default([])
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("documents")
+}
+
+model UserPasskey {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  credentialId String   @unique @map("credential_id")
+  publicKey    String   @map("public_key")
+  counter      BigInt   @default(0)
+  transports   String[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_passkeys")
 }
 
 // ─── Family & Shared Finance ──────────────────────────────────────────

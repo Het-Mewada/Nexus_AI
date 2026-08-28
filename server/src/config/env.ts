@@ -12,7 +12,11 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
   RESEND_FROM_EMAIL: z.string().email("RESEND_FROM_EMAIL must be a valid email"),
   STORAGE_BUCKET: z.string().default("receipts"),
-  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
+  GEMINI_API_KEY: z.string().optional().default(""),
+  OPENAI_API_KEY: z.string().optional().default(""),
+  GROQ_API_KEY: z.string().optional().default(""),
+  OPENROUTER_API_KEY: z.string().optional().default(""),
+  OLLAMA_HOST: z.string().optional().default("http://localhost:11434"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
 });
 

@@ -56,8 +56,10 @@ Return a JSON object with:
       const weekTotal = weekExpenses.reduce((s, e) => s + Number(e.amount), 0);
       const weekCategories: Record<string, number> = {};
       weekExpenses.forEach((e) => {
-        weekCategories[e.category.name] = (weekCategories[e.category.name] || 0) + Number(e.amount);
+        const catName = e.category?.name || 'Uncategorized';
+        weekCategories[catName] = (weekCategories[catName] || 0) + Number(e.amount);
       });
+
 
       const weekIncomes = await prisma.income.findMany({
         where: { userId, deletedAt: null, date: { gte: oneWeekAgo } },

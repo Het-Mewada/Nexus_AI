@@ -29,9 +29,10 @@ export class AIService {
     // Group expenses by category
     const categoryTotals: Record<string, number> = {};
     expenses.forEach((exp) => {
-      const catName = exp.category.name;
+      const catName = exp.category?.name || "Uncategorized";
       categoryTotals[catName] = (categoryTotals[catName] || 0) + Number(exp.amount);
     });
+
 
     // Budgets
     const budgets = await prisma.budget.findMany({
@@ -126,12 +127,13 @@ export class AIService {
         date: e.date.toISOString().split("T")[0],
         merchant: e.merchant,
         amount: Number(e.amount),
-        category: e.category.name,
+        category: e.category?.name || "Uncategorized",
         paymentMethod: e.paymentMethod,
         notes: e.notes || undefined,
         tags: e.tags?.length ? e.tags : undefined,
         isRecurring: e.isRecurring
       })),
+
       incomes: allIncomes.map(i => ({
         date: i.date.toISOString().split("T")[0],
         source: i.source,

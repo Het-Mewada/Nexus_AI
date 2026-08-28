@@ -77,10 +77,13 @@ export class GoalService {
     const existing = await prisma.goal.findFirst({ where: { id, userId, deletedAt: null } });
     if (!existing) throw new AppError(404, 'GOAL_NOT_FOUND', 'Goal not found');
 
+    const { id: _id, userId: _userId, createdAt: _ca, updatedAt: _ua, ...cleanData } = (data || {}) as any;
+
     const updated = await prisma.goal.update({
       where: { id },
-      data,
+      data: cleanData,
     });
+
 
     if (data.currentAmount !== undefined && data.currentAmount > Number(existing.currentAmount)) {
       const addedContribution = data.currentAmount - Number(existing.currentAmount);

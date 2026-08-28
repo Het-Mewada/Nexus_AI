@@ -89,12 +89,14 @@ export class SubscriptionService {
 
       if (sub.billingCycle === 'YEARLY') {
         nextDate.setFullYear(nextDate.getFullYear() + 1);
-        nextDate.setDate(originalDay);
+        const daysInNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+        nextDate.setDate(Math.min(originalDay, daysInNewMonth));
       } else { // MONTHLY
         nextDate.setMonth(nextDate.getMonth() + 1);
         const daysInNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
         nextDate.setDate(Math.min(originalDay, daysInNewMonth));
       }
+
 
       let categoryId = sub.categoryId;
       if (!categoryId) {

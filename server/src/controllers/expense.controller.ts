@@ -72,9 +72,18 @@ export class ExpenseController {
         return;
       }
 
-      const categories = await prisma.category.findMany();
+      const categories = await prisma.category.findMany({
+        where: {
+          deletedAt: null,
+          OR: [
+            { isDefault: true },
+            { userId: req.user!.id }
+          ]
+        }
+      });
       const extractedData = await aiService.scanReceipt(req.file.buffer, req.file.mimetype, categories);
       sendSuccess(res, extractedData, "Receipt scanned successfully");
+
     } catch (error) {
       next(error);
     }

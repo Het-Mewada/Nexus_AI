@@ -1,5 +1,6 @@
 import { categoryRepository } from "../repositories/category.repository";
 import { AppError } from "../middleware/errorHandler";
+import { prisma } from "../config/database";
 
 export class CategoryService {
   async list(userId: string) {
@@ -61,9 +62,25 @@ export class CategoryService {
       throw new AppError(409, "CATEGORY_IN_USE", "Cannot delete a category that has expenses. Reassign expenses first.");
     }
 
+    const [budgetCount, billCount, subCount, smartSavingCount] = await Promise.all([
+      prisma.budget.count({ where: { categoryId: id } }),
+      prisma.bill.count({ where: { categoryId: id, deletedAt: null } }),
+      prisma.subscription.count({ where: { categoryId: id } }),
+      prisma.smartSaving.count({ where: { categoryId: id } }),
+    ]);
+
+    if (budgetCount > 0 || billCount > 0 || subCount > 0 || smartSavingCount > 0) {
+      throw new AppError(
+        409,
+        "CATEGORY_IN_USE",
+        "Cannot delete category because it is linked to active budgets, bills, subscriptions, or smart savings."
+      );
+    }
+
     await categoryRepository.softDelete(id, userId);
     return { message: "Category deleted successfully" };
   }
 }
+
 
 export const categoryService = new CategoryService();

@@ -52,3 +52,5 @@ export function useMobile(): boolean {
 }
 
 export { useBalanceCheck } from "./useBalanceCheck";
+export { useSpeechRecognition } from "./useSpeechRecognition";
+

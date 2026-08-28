@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Nexus Finance</title>
+  <desc id="desc">Orange Nexus network mark for a personal finance workspace</desc>
+  <defs>
+    <linearGradient id="nexusOrange" x1="72" y1="64" x2="440" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9A62"/>
+      <stop offset="0.48" stop-color="#ED5A25"/>
+      <stop offset="1" stop-color="#C9471B"/>
+    </linearGradient>
+    <linearGradient id="coreOrange" x1="180" y1="160" x2="350" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE2D2"/>
+      <stop offset="1" stop-color="#FF8350"/>
+    </linearGradient>
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <circle cx="256" cy="256" r="190" stroke="url(#nexusOrange)" stroke-width="28" stroke-linecap="round" stroke-dasharray="360 80" transform="rotate(-45 256 256)"/>
+  <g fill="#FFF8F2" filter="url(#softGlow)">
+    <circle cx="256" cy="66" r="13"/>
+    <circle cx="446" cy="256" r="13"/>
+    <circle cx="256" cy="446" r="13"/>
+    <circle cx="66" cy="256" r="13"/>
+  </g>
+  <g stroke="#FFF8F2" stroke-width="11" stroke-linecap="round" opacity=".92">
+    <path d="M256 104V178"/>
+    <path d="M408 256H334"/>
+    <path d="M256 408V334"/>
+    <path d="M104 256H178"/>
+  </g>
+
+  <circle cx="256" cy="256" r="92" fill="#123B2E" stroke="url(#coreOrange)" stroke-width="12"/>
+  <path d="M210 306V206L302 306V206" stroke="url(#coreOrange)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="11" fill="#FFF8F2" filter="url(#softGlow)"/>
+</svg>

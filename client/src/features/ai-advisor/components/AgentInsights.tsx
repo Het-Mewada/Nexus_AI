@@ -43,7 +43,8 @@ export function AgentInsights() {
   });
 
   if (isLoading) return null;
-  if (!insights || (insights as any[]).length === 0) return null;
+  const insightList = Array.isArray(insights) ? insights : [];
+  if (insightList.length === 0) return null;
 
   return (
     <div className="space-y-4 mb-8">
@@ -62,7 +63,7 @@ export function AgentInsights() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {(insights as any[]).map((insight: any) => {
+        {insightList.map((insight: any) => {
           const Icon = iconMap[insight.severity as keyof typeof iconMap] || Info;
           return (
             <div

@@ -83,8 +83,8 @@ export default function AiCfoPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-6 max-w-6xl">
-      <div className="mb-8">
+    <div className="container mx-auto p-4 space-y-8 max-w-6xl">
+      <div className="mb-8 border-b border-border/80 pb-7">
         <h1 className="text-3xl font-bold tracking-tight">AI Chief Financial Officer</h1>
         <p className="text-muted-foreground mt-2">Strategic, long-term financial guidance and behavior analysis powered by AI.</p>
       </div>

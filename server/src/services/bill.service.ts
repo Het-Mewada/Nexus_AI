@@ -75,8 +75,10 @@ export class BillService {
       const linkedExpense = await prisma.expense.findFirst({
         where: {
           userId,
-          merchant: existing.name,
-          notes: `Automatically logged from bill: ${existing.name}`
+          OR: [
+            { billId: id },
+            { merchant: existing.name, notes: `Automatically logged from bill: ${existing.name}` }
+          ]
         },
         orderBy: { createdAt: 'desc' }
       });
@@ -118,6 +120,7 @@ export class BillService {
     await prisma.expense.create({
       data: {
         userId,
+        billId: existing.id,
         amount: existing.amount,
         categoryId: categoryId,
         merchant: existing.name,
@@ -166,15 +169,17 @@ export class BillService {
     const linkedExpense = await prisma.expense.findFirst({
       where: {
         userId,
-        merchant: existing.name,
-        isAutoSynced: true,
-        syncSource: 'bill',
+        OR: [
+          { billId: id },
+          { merchant: existing.name, isAutoSynced: true, syncSource: 'bill' }
+        ]
       },
       orderBy: { createdAt: 'desc' }
     });
     if (linkedExpense) {
       await prisma.expense.delete({ where: { id: linkedExpense.id } });
     }
+
 
     // 2. Rewind the due date by 1 month
     const originalDay = new Date(existing.dueDate).getDate();

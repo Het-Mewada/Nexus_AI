@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { systemApi, notificationApi } from "@/services/api";
@@ -8,7 +8,7 @@ import {
   LayoutDashboard, TrendingUp, TrendingDown, Wallet, PieChart,
   Tag, Settings, User, LogOut, Search, Moon, Sun, Monitor,
   Menu, X, ChevronLeft, ChevronDown, ChevronRight, Target, Trophy, Calendar,
-  Repeat, Briefcase, Shield, Calculator, Users, FolderClosed, Bell, Sparkles, PiggyBank, BrainCircuit, Contact, MessageSquare
+  Repeat, Briefcase, Shield, Calculator, Users, FolderClosed, Bell, Sparkles, PiggyBank, BrainCircuit, Contact, MessageSquare, ShieldAlert
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -85,7 +85,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const isMobile = useMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !window.matchMedia("(max-width: 768px)").matches;
+  });
+
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const { data: featureData } = useQuery({
     queryKey: ["systemFeatures"],
@@ -108,8 +115,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       { name: "Admin Dashboard", href: "/admin", icon: LayoutDashboard },
       { name: "Feedbacks", href: "/admin/feedback", icon: MessageSquare },
       { name: "Feature Flags", href: "/admin/features", icon: Shield },
+      { name: "Data Reset", href: "/admin/data-clear", icon: ShieldAlert },
     ]
   }] : [];
+
 
   // Filter navigationGroups based on systemFeatures (HIDDEN)
   const filteredNavGroups = navigationGroups
@@ -154,9 +163,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const themeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
   const ThemeIcon = themeIcon;
   const nextTheme = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+  const currentItem = navGroups.flatMap((group) => group.items).find((item) => item.href === location.pathname);
+  const currentGroup = navGroups.find((group) => group.items.some((item) => item.href === location.pathname));
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="liquid-app flex h-screen overflow-hidden">
       {/* Sidebar */}
       <AnimatePresence mode="wait">
         {(sidebarOpen || !isMobile) && (
@@ -166,9 +177,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             exit={isMobile ? { x: -280 } : undefined}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "flex flex-col border-r border-sidebar-border bg-sidebar",
-              isMobile ? "fixed inset-y-0 left-0 z-50 w-[280px] shadow-2xl" : "relative",
-              sidebarOpen ? "w-[280px]" : "w-[72px]"
+              "glass-sidebar flex flex-col border-r border-sidebar-border",
+              isMobile ? "fixed inset-y-0 left-0 z-50 w-[248px] shadow-2xl" : "relative z-40",
+              sidebarOpen ? "w-[248px]" : "w-[68px]"
             )}
           >
             {!isMobile && (
@@ -176,25 +187,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 variant="outline"
                 size="icon"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="absolute -right-3 top-5 z-50 h-6 w-6 rounded-full border-sidebar-border shadow-sm bg-background"
+                className={cn(
+                  "absolute -right-4 top-4 z-50 h-8 w-8 rounded-full border shadow-md",
+                  resolvedTheme === "light" ? "border-black bg-white text-black" : "border-sidebar-border bg-sidebar text-sidebar-foreground"
+                )}
+                style={resolvedTheme === "light" ? { color: "#000", borderColor: "#000", backgroundColor: "#fff" } : undefined}
               >
                 <ChevronLeft className={cn("h-4 w-4 transition-transform", !sidebarOpen && "rotate-180")} />
               </Button>
             )}
 
             {/* Logo */}
-            <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4 overflow-hidden">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm shrink-0">
-                N
-              </div>
+            <div className="flex h-[82px] items-center gap-3 border-b border-sidebar-border px-4 overflow-hidden">
+              <img
+                src="/nexus-favicon.svg"
+                alt="Nexus AI"
+                className="h-9 w-9 shrink-0 rounded-[10px]"
+              />
               {sidebarOpen && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="font-bold text-lg gradient-text whitespace-nowrap"
-                >
-                  Nexus AI
-                </motion.span>
+                <div className="min-w-0">
+                  <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="block font-extrabold text-[17px] tracking-[-0.04em] text-sidebar-foreground whitespace-nowrap">Nexus AI</motion.span>
+                  <span className="block mt-0.5 text-[10px] uppercase tracking-[0.16em] text-sidebar-foreground/40 whitespace-nowrap">Personal finance OS</span>
+                </div>
               )}
               {isMobile && (
                 <Button
@@ -209,7 +223,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 space-y-6 px-3 py-4 overflow-y-auto overflow-x-hidden scrollbar-none">
+            <nav className="flex-1 space-y-4 px-3 py-5 overflow-y-auto overflow-x-hidden scrollbar-none">
               {navGroups.map((group, groupIdx) => {
                 const isGroupDisabled = systemFeatures[group.label] === "DISABLED";
 
@@ -229,7 +243,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           toggleGroup(group.label)
                         }}
                       >
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 group-hover/header:text-foreground transition-colors">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/38 group-hover/header:text-sidebar-foreground/70 transition-colors">
                           {group.label}
                         </span>
                         {expandedGroups[group.label] ? (
@@ -248,11 +262,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       const isItemDisabled = isGroupDisabled || itemFeatureState === "DISABLED";
 
                       const className = cn(
-                        "flex items-center gap-3 rounded-xl py-2.5 text-sm font-medium transition-all duration-200",
+                        "flex items-center gap-3 rounded-[10px] py-2.5 text-[13px] font-medium transition-all duration-200",
                         sidebarOpen ? "pl-5 pr-3 ml-2" : "px-3 justify-center",
                         isActive
-                          ? "bg-primary/10 text-primary shadow-sm"
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-border/50 hover:text-sidebar-foreground",
+                          ? "bg-primary text-primary-foreground shadow-[0_8px_20px_hsl(17_78%_52%/0.18)]"
+                          : "text-sidebar-foreground/60 hover:bg-sidebar-foreground/[0.08] hover:text-sidebar-foreground",
                         isItemDisabled && "opacity-50 grayscale hover:bg-transparent cursor-not-allowed text-sidebar-foreground/40 hover:text-sidebar-foreground/40"
                       );
 
@@ -280,7 +294,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           title={!sidebarOpen ? item.name : undefined}
                         >
                           <div className="relative">
-                            <item.icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary")} />
+                            <item.icon className={cn("h-[17px] w-[17px] shrink-0", isActive ? "text-primary-foreground" : "text-sidebar-foreground/60 group-hover:text-sidebar-foreground")} />
                             {!sidebarOpen && item.name === "Notifications" && unreadCount > 0 && (
                               <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
                                 {unreadCount > 9 ? "9+" : unreadCount}
@@ -300,7 +314,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                           {isActive && sidebarOpen && (
                             <motion.div
                               layoutId="sidebar-indicator"
-                              className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+                              className="ml-auto h-1.5 w-1.5 rounded-full bg-primary-foreground"
                             />
                           )}
                         </Link>
@@ -313,17 +327,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
             {/* User section */}
             {sidebarOpen && (
-              <div className="border-t border-sidebar-border p-4">
-                <div className="flex items-center gap-3">
+              <div className="border-t border-sidebar-border bg-sidebar/60 p-3">
+                <div className="flex items-center gap-3 rounded-[10px] px-2 py-2 transition-colors hover:bg-sidebar-foreground/[0.06]">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.avatarUrl || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {getInitials(user?.name || user?.email || "U")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{user?.name || "User"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                    <p className="truncate text-sm font-medium text-white dark:text-sidebar-foreground">{user?.name || "User"}</p>
+                    <p className="truncate text-xs text-white/65 dark:text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -346,23 +360,35 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Navbar */}
-        <header className="flex h-16 items-center gap-4 border-b border-border bg-background/80 backdrop-blur-md px-4 md:px-6 sticky top-0 z-30">
+        <header className="glass-topbar flex h-[82px] items-center gap-4 border-b px-4 md:px-8 sticky top-0 z-30">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-              <Menu className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+                <Menu className="h-5 w-5" />
+              </Button>
+              <div className="flex sm:hidden items-center gap-2">
+                <img src="/nexus-favicon.svg" alt="Nexus AI" className="h-6 w-6 rounded-[6px]" />
+                <span className="font-extrabold text-base tracking-tight text-foreground">Nexus AI</span>
+              </div>
+            </div>
           )}
 
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="hidden sm:flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Workspace</span>
+              <span className="text-border">/</span>
+              <span className="font-semibold text-foreground">{currentItem?.name || "Overview"}</span>
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
             {/* Theme toggle */}
-            <Button variant="ghost" size="icon" onClick={() => setTheme(nextTheme)} className="h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={() => setTheme(nextTheme)} className="h-9 w-9 rounded-[9px]">
               <ThemeIcon className="h-4 w-4" />
             </Button>
 
             {/* User menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={user?.avatarUrl || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
@@ -394,17 +420,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto" style={{ "--page-section": `"${currentGroup?.label || "Main"} /"` } as React.CSSProperties}>
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="p-4 md:p-6 lg:p-8"
+            className="mx-auto w-full max-w-[1680px] p-5 md:p-8 lg:p-10"
           >
             {children}
           </motion.div>

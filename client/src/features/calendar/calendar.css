@@ -85,7 +85,7 @@
 
 /* Toolbar Styling */
 .rbc-toolbar {
-  padding: 1rem 0;
+  padding: 1rem clamp(0.75rem, 2vw, 1.5rem);
   gap: 1rem;
 }
 

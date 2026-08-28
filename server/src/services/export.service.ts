@@ -48,7 +48,8 @@ export class ExportService {
     for (const expense of expenses) {
       csv += `${expense.date.toISOString().split("T")[0]},`;
       csv += `${sanitizeCSVCell(expense.merchant)},`;
-      csv += `${sanitizeCSVCell(expense.category.name)},`;
+      csv += `${sanitizeCSVCell(expense.category?.name || "Uncategorized")},`;
+
       csv += `${toNumber(expense.amount)},`;
       csv += `${expense.paymentMethod},`;
       csv += `${sanitizeCSVCell(expense.tags.join("; "))},`;

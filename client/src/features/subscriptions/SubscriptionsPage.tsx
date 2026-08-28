@@ -114,8 +114,8 @@ export default function SubscriptionsPage() {
   const monthlyTotal = subs.filter(s => s.status === "ACTIVE").reduce((acc, sub) => acc + (sub.billingCycle === "YEARLY" ? Number(sub.amount)/12 : Number(sub.amount)), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col border-b border-border/80 pb-7 sm:flex-row sm:items-end sm:justify-between gap-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Subscriptions</h1>
           <p className="text-muted-foreground mt-1">Manage your recurring payments</p>
@@ -126,7 +126,7 @@ export default function SubscriptionsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 text-primary-foreground">
+            <Card className="bg-primary text-primary-foreground">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-indigo-100 font-medium">Monthly Cost</p>

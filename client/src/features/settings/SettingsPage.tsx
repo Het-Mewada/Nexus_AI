@@ -117,8 +117,8 @@ export default function SettingsPage() {
   const onProfileSubmit = (data: ProfileForm) => updateProfile.mutate(data);
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-8">
+      <div className="border-b border-border/80 pb-7">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your account preferences and settings</p>
       </div>

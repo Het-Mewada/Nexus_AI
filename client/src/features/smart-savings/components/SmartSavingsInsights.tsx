@@ -23,7 +23,7 @@ export function SmartSavingsInsights() {
   if (!insights || insights.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-primary/10 via-background to-background border border-primary/20 rounded-xl p-6 relative overflow-hidden">
+    <div className="bg-card border border-border border-l-4 border-l-success rounded-[14px] p-6 relative overflow-hidden">
       <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
         <Sparkles className="w-48 h-48 text-primary" />
       </div>

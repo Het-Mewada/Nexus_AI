@@ -10,8 +10,8 @@ export default function PortfolioPage() {
   const [activeTab, setActiveTab] = useLocalStorage("portfolioActiveTab", "holdings");
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-8">
+      <div className="border-b border-border/80 pb-7">
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Stock Market & Portfolio</h1>
         <p className="text-muted-foreground mt-1">Track your investments, watch live markets, and discover IPOs</p>
       </div>

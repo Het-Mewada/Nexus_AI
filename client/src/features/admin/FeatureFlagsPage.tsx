@@ -54,7 +54,7 @@ const FEATURE_GROUPS = [
     items: [
       { name: "Portfolio" },
       { name: "Family" },
-      { name: "Address Book" },
+      { name: "Contacts" },
       { name: "Documents" }
     ]
   }

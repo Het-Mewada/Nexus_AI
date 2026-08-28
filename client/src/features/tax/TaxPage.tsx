@@ -161,8 +161,8 @@ export default function TaxPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col border-b border-border/80 pb-7 sm:flex-row sm:items-end sm:justify-between gap-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Tax Planning</h1>
           <p className="text-muted-foreground mt-1">Estimate your income tax and plan deductions</p>

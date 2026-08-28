@@ -175,9 +175,12 @@ router.use("/market", marketRoutes);
 
 // ─── AI ──────────────────────────────────────────
 import { aiController } from "../controllers/ai.controller";
+import { voiceExpenseController } from "../controllers/voice-expense.controller";
 router.get("/ai/insights", authMiddleware, aiController.getInsights);
 router.post("/ai/chat", authMiddleware, aiController.chat);
 router.post("/ai/categorize", authMiddleware, aiController.categorize);
+router.post("/ai/parse-voice-expense", authMiddleware, voiceExpenseController.parseVoiceExpense);
+
 
 // ─── Phase 4A: Conversations (AI Memory) ─────────
 import { conversationController } from "../controllers/conversation.controller";
@@ -226,12 +229,15 @@ router.use("/negotiation", negotiationRoutes);
 router.use("/addresses", addressesRoutes);
 
 // ─── Admin ───────────────────────────────────────
+import { adminDataClearController } from "../controllers/adminDataClear.controller";
 router.get("/admin/stats", authMiddleware, adminMiddleware, adminController.getStats);
 router.get("/admin/users", authMiddleware, adminMiddleware, adminController.listUsers);
 router.patch("/admin/users/:id/status", authMiddleware, adminMiddleware, adminController.updateUserStatus);
 router.delete("/admin/users/:id", authMiddleware, adminMiddleware, adminController.deleteUser);
+router.post("/admin/clear-user-data", authMiddleware, adminMiddleware, adminDataClearController.clearUserData);
 router.get("/admin/feedbacks", authMiddleware, adminMiddleware, adminController.listFeedbacks);
 router.patch("/admin/feedbacks/:id/status", authMiddleware, adminMiddleware, adminController.updateFeedbackStatus);
 router.post("/admin/feedbacks/:id/reply", authMiddleware, adminMiddleware, adminController.addFeedbackReply);
 
 export default router;
+

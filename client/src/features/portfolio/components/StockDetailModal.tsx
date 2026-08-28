@@ -212,10 +212,12 @@ export default function StockDetailModal({
                       tickFormatter={(val) => `${currencySymbol}${val}`}
                     />
                     <Tooltip
-                      contentStyle={{ backgroundColor: 'var(--color-background)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: 'var(--color-card)', borderColor: 'var(--color-border)', borderRadius: '12px', boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.4)' }}
+                      labelStyle={{ color: 'var(--color-foreground)', fontWeight: 'bold', marginBottom: '4px' }}
                       itemStyle={{ color: 'var(--color-foreground)' }}
                       formatter={(value: any) => [`${currencySymbol}${Number(value).toFixed(2)}`, 'Price']}
                     />
+
                     <Line
                       type="monotone"
                       dataKey="price"

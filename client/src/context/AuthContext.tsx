@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const syncPromiseRef = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     if (user?.currency) {
@@ -37,27 +38,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.currency, user]);
 
   const syncUser = useCallback(async (currentSession: Session) => {
-    try {
-      await api.post("/auth/sync", { isNewUser: false }, {
-        headers: { Authorization: `Bearer ${currentSession.access_token}` },
-      });
-      const { data: res } = await api.get("/users/me", {
-        headers: { Authorization: `Bearer ${currentSession.access_token}` },
-      });
-      if (res.success) {
-        setUser(res.data);
-      }
-    } catch (err: any) {
-      if (err.response?.status === 403) {
-         toast.error("Your account has been suspended by an administrator.");
-         await supabase.auth.signOut();
-         setSession(null);
-         setSupabaseUser(null);
-         setUser(null);
-         return;
-      }
-      // User will be created on first sync
+    if (syncPromiseRef.current) {
+      return syncPromiseRef.current;
     }
+
+    const promise = (async () => {
+      try {
+        await api.post("/auth/sync", { isNewUser: false }, {
+          headers: { Authorization: `Bearer ${currentSession.access_token}` },
+        });
+        const { data: res } = await api.get("/users/me", {
+          headers: { Authorization: `Bearer ${currentSession.access_token}` },
+        });
+        if (res.success) {
+          setUser(res.data);
+        }
+      } catch (err: any) {
+        if (err.response?.status === 403) {
+          toast.error("Your account has been suspended by an administrator.");
+          await supabase.auth.signOut();
+          setSession(null);
+          setSupabaseUser(null);
+          setUser(null);
+        }
+      } finally {
+        syncPromiseRef.current = null;
+      }
+    })();
+
+    syncPromiseRef.current = promise;
+    return promise;
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -74,14 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      console.log('INIT AUTH: checking localStorage', localStorage.getItem('sb-jgyrzomssqnosyotysyn-auth-token') ? 'present' : 'missing');
-      const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-      console.log('INIT AUTH: currentSession=', !!currentSession, 'error=', error);
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (currentSession) {
         setSession(currentSession);
         setSupabaseUser(currentSession.user);
         await syncUser(currentSession);
-        console.log('INIT AUTH: syncUser completed, user is now:', user);
       }
       setIsLoading(false);
     };
@@ -92,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
       setSupabaseUser(newSession?.user ?? null);
       if (newSession) {
-        if (_event === "SIGNED_IN") {
+        if (_event === "SIGNED_IN" || _event === "INITIAL_SESSION") {
           await syncUser(newSession);
         }
       } else {
@@ -123,12 +130,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.session) {
         try {
-          await api.post("/auth/sync", { isNewUser: false }, {
-            headers: { Authorization: `Bearer ${data.session.access_token}` },
-          });
+          await syncUser(data.session);
         } catch (err: any) {
           if (err.response?.status === 403) {
-            try { await supabase.auth.signOut(); } catch (e) {} // ignore signout errors
+            try { await supabase.auth.signOut(); } catch (e) { }
             setSession(null);
             setSupabaseUser(null);
             setUser(null);
@@ -142,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: err.message || "An unexpected error occurred" };
     }
   };
+
 
   const signOut = async () => {
     await supabase.auth.signOut();

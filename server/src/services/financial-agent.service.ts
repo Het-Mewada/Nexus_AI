@@ -30,7 +30,7 @@ export class FinancialAgentService {
     // Category breakdown
     const categoryTotals: Record<string, number> = {};
     expenses.forEach((e) => {
-      const name = e.category.name;
+      const name = e.category?.name || 'Uncategorized';
       categoryTotals[name] = (categoryTotals[name] || 0) + Number(e.amount);
     });
 
@@ -42,9 +42,10 @@ export class FinancialAgentService {
     const lastMonthTotal = lastMonthExpenses.reduce((s, e) => s + Number(e.amount), 0);
     const lastMonthCategories: Record<string, number> = {};
     lastMonthExpenses.forEach((e) => {
-      const name = e.category.name;
+      const name = e.category?.name || 'Uncategorized';
       lastMonthCategories[name] = (lastMonthCategories[name] || 0) + Number(e.amount);
     });
+
 
     // Budgets
     const budgets = await prisma.budget.findMany({ where: { userId }, include: { category: true } });
@@ -120,12 +121,13 @@ export class FinancialAgentService {
         date: e.date.toISOString().split("T")[0],
         merchant: e.merchant,
         amount: Number(e.amount),
-        category: e.category.name,
+        category: e.category?.name || 'Uncategorized',
         paymentMethod: e.paymentMethod,
         notes: e.notes || undefined,
         tags: e.tags?.length ? e.tags : undefined,
         isRecurring: e.isRecurring
       })),
+
       incomes: allIncomes.map(i => ({
         date: i.date.toISOString().split("T")[0],
         source: i.source,
@@ -234,11 +236,14 @@ CRITICAL RULES:
 
       let insights: any[];
       try {
-        insights = JSON.parse(response.text);
+        const text = response.text || '';
+        const jsonMatch = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+        insights = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
       } catch {
         logger.warn('Agent returned invalid JSON', { userId, raw: response.text?.slice(0, 200) });
         return;
       }
+
 
       if (!Array.isArray(insights) || insights.length === 0) return;
 

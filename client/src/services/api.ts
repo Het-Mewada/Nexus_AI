@@ -4,7 +4,7 @@ import type {
   Budget, Goal, Bill, Subscription, Investment, Loan, Insurance, Document, TaxProfile, FamilyGroup, SharedWallet, SharedWalletTransaction, Notification,
   Watchlist, MarketQuote, IpoItem,
   AiConversation, AiInsight, FinancialSimulation, CoachingChallenge, CoachingProgress, DailyTip, WeeklyReview, SimulationResults, Contact, Address,
-  Feedback
+  Feedback, ExtractedVoiceExpense
 } from "@/types";
 
 // ─── User ────────────────────────────────────────
@@ -37,7 +37,14 @@ export const adminApi = {
     api.post<ApiResponse<any>>(`/admin/feedbacks/${id}/reply`, { message }).then((r) => r.data),
   updateSystemFeatures: (features: Record<string, string>) => 
     api.patch<ApiResponse<{ features: Record<string, string> }>>(`/admin/system/features`, { features }).then((r) => r.data),
+  clearUserData: (data: {
+    email: string;
+    features: Record<string, boolean>;
+    confirmDelete: boolean;
+    confirmEmail?: string;
+  }) => api.post<ApiResponse<any>>("/admin/clear-user-data", data).then((r) => r.data),
 };
+
 
 export const systemApi = {
   getFeatures: () => 
@@ -135,7 +142,10 @@ export const aiApi = {
   getInsights: () => api.get<ApiResponse<{ insights: string[] }>>("/ai/insights").then((r) => r.data),
   chat: (query: string) => api.post<ApiResponse<{ role: string; content: string }>>("/ai/chat", { query }).then((r) => r.data),
   categorize: (merchant: string, description?: string) => api.post<ApiResponse<{ category: string }>>("/ai/categorize", { merchant, description }).then((r) => r.data),
+  parseVoiceExpense: (text: string, userTimezone?: string) =>
+    api.post<ApiResponse<ExtractedVoiceExpense>>("/ai/parse-voice-expense", { text, userTimezone }).then((r) => r.data),
 };
+
 
 // ─── Budgets ─────────────────────────────────────
 export const budgetApi = {
@@ -257,6 +267,15 @@ export const documentApi = {
   getDocuments: () => api.get<ApiResponse<Document[]>>("/documents").then((r) => r.data),
   uploadDocument: (data: FormData) => api.post<ApiResponse<Document>>("/documents", data, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data),
   deleteDocument: (id: string) => api.delete<ApiResponse<{ message: string }>>(`/documents/${id}`).then((r) => r.data),
+  protectDocument: (id: string, data: { method: 'LOGIN_PASSWORD' | 'CUSTOM_PASSWORD'; customPassword?: string; enableBiometrics?: boolean }) =>
+    api.post<ApiResponse<any>>(`/documents/${id}/protect`, data).then((r) => r.data),
+  unlockDocument: (id: string, data: { type: 'PASSWORD' | 'BIOMETRIC'; password?: string; credentialId?: string; authenticatorData?: string; clientDataJSON?: string; signature?: string }) =>
+    api.post<ApiResponse<{ unlockToken: string; expiresIn: number }>>(`/documents/${id}/unlock`, data).then((r) => r.data),
+  getStreamUrl: (id: string, unlockToken: string) => `${api.defaults.baseURL || '/api'}/documents/${id}/stream?token=${encodeURIComponent(unlockToken)}`,
+  getWebAuthnRegisterChallenge: () => api.post<ApiResponse<any>>("/documents/webauthn/register-challenge").then((r) => r.data),
+  verifyWebAuthnRegister: (data: { credentialId: string; publicKey: string; transports?: string[] }) =>
+    api.post<ApiResponse<any>>("/documents/webauthn/register-verify", data).then((r) => r.data),
+  getWebAuthnAuthChallenge: () => api.post<ApiResponse<any>>("/documents/webauthn/auth-challenge").then((r) => r.data),
 };
 
 // ─── Notifications ───────────────────────────────

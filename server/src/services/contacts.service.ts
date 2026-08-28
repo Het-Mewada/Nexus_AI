@@ -34,18 +34,25 @@ export class ContactsService {
     return contact;
   }
 
+  private sanitizeContactPayload(payload: any) {
+    const { id, userId, createdAt, updatedAt, ...rest } = payload || {};
+    return rest;
+  }
+
+
   async createContact(userId: string, data: any) {
+    const sanitized = this.sanitizeContactPayload(data);
     return prisma.contact.create({
       data: {
-        ...data,
+        ...sanitized,
         userId,
       },
     });
   }
 
   async bulkCreateContacts(userId: string, data: any[]) {
-    const contactsData = data.map(contact => ({
-      ...contact,
+    const contactsData = (data || []).map(contact => ({
+      ...this.sanitizeContactPayload(contact),
       userId,
     }));
 
@@ -58,11 +65,13 @@ export class ContactsService {
 
   async updateContact(userId: string, id: string, data: any) {
     const contact = await this.getContact(userId, id);
+    const sanitized = this.sanitizeContactPayload(data);
     return prisma.contact.update({
       where: { id: contact.id },
-      data,
+      data: sanitized,
     });
   }
+
 
   async deleteContact(userId: string, id: string) {
     const contact = await this.getContact(userId, id);

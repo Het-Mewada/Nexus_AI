@@ -1,4 +1,5 @@
 import { prisma } from "../config/database";
+import { AppError } from "../middleware/errorHandler";
 
 export const adminService = {
   async getGlobalStats() {
@@ -58,20 +59,27 @@ export const adminService = {
     };
   },
 
-  async updateUserStatus(userId: string, status: "ACTIVE" | "SUSPENDED") {
+  async updateUserStatus(targetUserId: string, status: "ACTIVE" | "SUSPENDED", adminUserId?: string) {
+    if (adminUserId && targetUserId === adminUserId && status === "SUSPENDED") {
+      throw new AppError(400, "CANNOT_SUSPEND_SELF", "Administrators cannot suspend their own account.");
+    }
+
     return prisma.user.update({
-      where: { id: userId },
+      where: { id: targetUserId },
       data: { status }
     });
   },
 
-  async deleteUser(userId: string) {
-    // Optionally delete from Supabase Auth as well via supabaseAdmin
-    // But deleting in Prisma with Cascade will delete most data.
+  async deleteUser(targetUserId: string, adminUserId?: string) {
+    if (adminUserId && targetUserId === adminUserId) {
+      throw new AppError(400, "CANNOT_DELETE_SELF", "Administrators cannot delete their own account.");
+    }
+
     return prisma.user.delete({
-      where: { id: userId }
+      where: { id: targetUserId }
     });
   },
+
 
   async listFeedbacks(page = 1, limit = 50, status?: string) {
     const skip = (page - 1) * limit;

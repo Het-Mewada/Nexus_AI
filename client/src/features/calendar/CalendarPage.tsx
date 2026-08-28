@@ -1,15 +1,14 @@
 import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar as BigCalendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Plus, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { EventModal } from "./components/EventModal";
 import { calendarApi } from "@/services/api";
-import { toast } from "sonner";
 import "./calendar.css";
 
 const locales = {
@@ -78,8 +77,8 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col border-b border-border/80 pb-7 sm:flex-row sm:items-end sm:justify-between gap-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Calendar</h1>
           <p className="text-muted-foreground mt-1">Manage your schedule, reminders, and important dates</p>
@@ -89,46 +88,44 @@ export default function CalendarPage() {
         </Button>
       </div>
 
-      <Card className="shadow-lg border-primary/10 overflow-hidden">
-        <CardContent className="p-0 sm:p-4">
-          <div className="h-[75vh] w-full min-h-[500px]">
-            <BigCalendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%' }}
-              views={['month', 'week', 'day', 'agenda']}
-              view={currentView}
-              onView={handleView}
-              selectable
-              onSelectSlot={handleSelectSlot}
-              onSelectEvent={handleSelectEvent}
-              onNavigate={handleNavigate}
-              date={currentDate}
-              dayPropGetter={customDayPropGetter}
-              eventPropGetter={(event: any) => ({
-                style: {
-                  backgroundColor: event.color || '#6366f1',
-                  borderRadius: '4px',
-                  opacity: 0.9,
-                  color: 'white',
-                  border: '0px',
-                  display: 'block'
-                }
-              })}
-              components={{
-                event: (props: any) => (
-                  <div className="flex items-center gap-1 text-xs truncate px-1">
-                    {props.event.type === "MEETING" ? <Clock className="h-3 w-3 flex-shrink-0" /> : <CalendarIcon className="h-3 w-3 flex-shrink-0" />}
-                    <span>{props.title}</span>
-                  </div>
-                )
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <CardContent className="p-0">
+        <div className="h-[75vh] w-full min-h-[500px]">
+          <BigCalendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: '100%' }}
+            views={['month', 'week', 'day', 'agenda']}
+            view={currentView}
+            onView={handleView}
+            selectable
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            onNavigate={handleNavigate}
+            date={currentDate}
+            dayPropGetter={customDayPropGetter}
+            eventPropGetter={(event: any) => ({
+              style: {
+                backgroundColor: event.color || '#6366f1',
+                borderRadius: '4px',
+                opacity: 0.9,
+                color: 'white',
+                border: '0px',
+                display: 'block'
+              }
+            })}
+            components={{
+              event: (props: any) => (
+                <div className="flex items-center gap-1 text-xs truncate px-1">
+                  {props.event.type === "MEETING" ? <Clock className="h-3 w-3 flex-shrink-0" /> : <CalendarIcon className="h-3 w-3 flex-shrink-0" />}
+                  <span>{props.title}</span>
+                </div>
+              )
+            }}
+          />
+        </div>
+      </CardContent>
 
       {isModalOpen && (
         <EventModal

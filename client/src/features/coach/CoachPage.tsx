@@ -26,7 +26,7 @@ export default function CoachPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 pb-8">
       {/* Header */}
-      <motion.div variants={item}>
+      <motion.div variants={item} className="border-b border-border/80 pb-7">
         <h1 className="text-3xl font-bold tracking-tight">AI Wealth Coach</h1>
         <p className="text-muted-foreground mt-1">Your personalized guide to financial freedom.</p>
       </motion.div>

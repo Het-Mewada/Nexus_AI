@@ -150,76 +150,43 @@ export default function SalaryPage() {
   const latestSalary = data?.records && data.records.length > 0 ? data.records[0] : null;
 
   return (
-    <div className="space-y-6 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col gap-6 border-b border-border/80 pb-7 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Salary & Leaves</h1>
           <p className="text-muted-foreground mt-1">Manage expected pay, auto-sync income, and track leave balances</p>
         </div>
-        <Button onClick={() => { setSelectedRecord(null); reset({ month: now.getMonth() + 1, year: now.getFullYear(), leaves: 0, halfDays: 0, bonus: 0, otherDeductions: 0 }); setIsOpen(true); }} variant="gradient"><Plus className="h-4 w-4 mr-2" /> New Record</Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border-indigo-500/20">
-          <CardHeader className="pb-2 flex flex-row items-start justify-between">
-            <div>
-              <CardTitle className="text-lg">Leave Balance</CardTitle>
-              <CardDescription>Available paid time off</CardDescription>
-            </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-2" onClick={() => {
-              setConfigForm({
-                monthlyCasualLeaves: data?.balance?.monthlyCasualLeaves ?? 1,
-                monthlySickLeaves: data?.balance?.monthlySickLeaves ?? 0.5,
-              });
-              setIsConfigOpen(true);
-            }}>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </CardHeader>
-          <CardContent className="flex justify-between items-center">
-            <div className="text-center space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Casual Leaves</p>
-              <p className="text-3xl font-bold text-indigo-500">{data?.balance?.casualLeaves.toFixed(1) || "0.0"}</p>
-            </div>
-            <div className="h-12 w-px bg-border"></div>
-            <div className="text-center space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Sick Leaves</p>
-              <p className="text-3xl font-bold text-rose-500">{data?.balance?.sickLeaves.toFixed(1) || "0.0"}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* {latestSalary && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>{getMonthName(latestSalary.month)} {latestSalary.year}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-3xl font-bold text-emerald-500">{formatCurrency(Number(latestSalary.expectedSalary))}</p>
-                  {latestSalary.actualCredited && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Credited: {formatCurrency(Number(latestSalary.actualCredited))}
-                      {latestSalary.isSynced && " (Synced)"}
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">Base: {formatCurrency(Number(latestSalary.baseSalary))}</p>
-                  <p className="text-sm text-rose-500">
-                    -{formatCurrency(Number(latestSalary.baseSalary) - Number(latestSalary.expectedSalary) + Number(latestSalary.bonus))} (Deductions)
-                  </p>
-                </div>
+        <div className="flex items-end gap-5 lg:pl-8">
+          <div>
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Leave balance</p>
+            <div className="flex items-end gap-5">
+              <div>
+                <p className="text-xs text-muted-foreground">Casual</p>
+                <p className="mt-0.5 text-2xl font-bold text-indigo-500">{data?.balance?.casualLeaves.toFixed(1) || "0.0"}</p>
               </div>
-            </CardContent>
-          </Card>
-        )} */}
+              <div className="h-9 w-px bg-border" />
+              <div>
+                <p className="text-xs text-muted-foreground">Sick</p>
+                <p className="mt-0.5 text-2xl font-bold text-rose-500">{data?.balance?.sickLeaves.toFixed(1) || "0.0"}</p>
+              </div>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Configure leave balance" onClick={() => {
+            setConfigForm({
+              monthlyCasualLeaves: data?.balance?.monthlyCasualLeaves ?? 1,
+              monthlySickLeaves: data?.balance?.monthlySickLeaves ?? 0.5,
+            });
+            setIsConfigOpen(true);
+          }}>
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-primary" /> Salary History</CardTitle>
+          <Button onClick={() => { setSelectedRecord(null); reset({ month: now.getMonth() + 1, year: now.getFullYear(), leaves: 0, halfDays: 0, bonus: 0, otherDeductions: 0 }); setIsOpen(true); }} variant="gradient"><Plus className="h-4 w-4 mr-2" /> New Record</Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -273,15 +240,15 @@ export default function SalaryPage() {
                       </td>
                       <td className="py-3 px-2 text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleEdit(record)}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-[8px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => handleEdit(record)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                           </Button>
                           <ConfirmDeleteDialog
                             title="Delete Salary Record"
                             description="Are you sure? This action cannot be undone."
                             onConfirm={() => deleteMutation.mutate(record.id)}
                           >
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-[8px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </ConfirmDeleteDialog>
@@ -425,25 +392,25 @@ export default function SalaryPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Monthly Casual Leaves</Label>
-              <Input 
-                type="number" step="0.5" min="0" 
-                value={configForm.monthlyCasualLeaves} 
+              <Input
+                type="number" step="0.5" min="0"
+                value={configForm.monthlyCasualLeaves}
                 onChange={(e) => setConfigForm({ ...configForm, monthlyCasualLeaves: Number(e.target.value) })}
               />
             </div>
             <div className="space-y-2">
               <Label>Monthly Sick Leaves</Label>
-              <Input 
-                type="number" step="0.5" min="0" 
-                value={configForm.monthlySickLeaves} 
+              <Input
+                type="number" step="0.5" min="0"
+                value={configForm.monthlySickLeaves}
                 onChange={(e) => setConfigForm({ ...configForm, monthlySickLeaves: Number(e.target.value) })}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsConfigOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={() => configMutation.mutate(configForm)} 
+            <Button
+              onClick={() => configMutation.mutate(configForm)}
               disabled={configMutation.isPending}
             >
               Save Configuration

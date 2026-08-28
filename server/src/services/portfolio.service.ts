@@ -208,11 +208,14 @@ export class PortfolioService {
     const existing = await prisma.investment.findFirst({ where: { id, userId } });
     if (!existing) throw new AppError(404, 'INVESTMENT_NOT_FOUND', 'Investment not found');
 
+    const { id: _id, userId: _userId, createdAt: _ca, updatedAt: _ua, ...cleanData } = data || {};
+
     return prisma.investment.update({
       where: { id },
-      data,
+      data: cleanData,
     });
   }
+
 
   async deleteInvestment(userId: string, id: string) {
     const existing = await prisma.investment.findFirst({ where: { id, userId } });

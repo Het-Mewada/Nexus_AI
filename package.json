@@ -1,0 +1,17 @@
+{
+  "name": "nexus-ai-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Nexus AI Root - Expense Tracker Monorepo",
+  "scripts": {
+    "dev": "npx concurrently -k -n \"client,server\" -c \"cyan.bold,magenta.bold\" \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "install:all": "npm install --prefix client && npm install --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
+

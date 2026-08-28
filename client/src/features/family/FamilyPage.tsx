@@ -172,8 +172,8 @@ export default function FamilyPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      <div className="flex flex-col border-b border-border/80 pb-7 sm:flex-row sm:items-end sm:justify-between gap-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Family & Shared Wallets</h1>
           <p className="text-muted-foreground mt-1">Manage joint finances and collaborate with family</p>
@@ -232,19 +232,19 @@ export default function FamilyPage() {
 
                 <CardContent className="p-0">
                   <Tabs defaultValue="wallets" className="w-full">
-                    <div className="px-6 border-b">
-                      <TabsList className="bg-transparent h-12 p-0 space-x-6">
-                        <TabsTrigger value="wallets" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
+                    <div className="border-b px-4 sm:px-6">
+                      <TabsList className="h-14 gap-1 bg-transparent p-1">
+                        <TabsTrigger value="wallets" className="rounded-none border-b-2 border-transparent px-3 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent">
                           Shared Wallets
                         </TabsTrigger>
-                        <TabsTrigger value="members" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
+                        <TabsTrigger value="members" className="rounded-none border-b-2 border-transparent px-3 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent">
                           Members ({group.members.length})
                         </TabsTrigger>
-                        <TabsTrigger value="logs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
+                        <TabsTrigger value="logs" className="rounded-none border-b-2 border-transparent px-3 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent">
                           Activity Logs
                         </TabsTrigger>
                         {isAdmin && (
-                          <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-3">
+                          <TabsTrigger value="settings" className="rounded-none border-b-2 border-transparent px-3 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent">
                             Settings
                           </TabsTrigger>
                         )}

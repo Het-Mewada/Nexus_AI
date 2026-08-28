@@ -1,93 +1,303 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(28 44% 8%);
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', 'DM Sans', ui-sans-serif, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+  --color-background: hsl(48 24% 96%);
+  --color-foreground: hsl(155 22% 11%);
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(28 44% 8%);
+  --color-card-foreground: hsl(155 22% 11%);
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(28 44% 8%);
-  --color-primary: hsl(33 51% 17%);
+  --color-popover-foreground: hsl(155 22% 11%);
+  --color-primary: hsl(17 78% 52%);
   --color-primary-foreground: hsl(0 0% 100%);
-  --color-secondary: hsl(48 29% 84%);
-  --color-secondary-foreground: hsl(28 44% 8%);
-  --color-muted: hsl(48 29% 84%);
-  --color-muted-foreground: hsl(33 51% 17%);
-  --color-accent: hsl(48 29% 84%);
-  --color-accent-foreground: hsl(28 44% 8%);
-  --color-destructive: hsl(0 84% 60%);
-  --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(48 29% 84%);
-  --color-input: hsl(48 29% 84%);
-  --color-ring: hsl(33 51% 17%);
-  --color-success: hsl(160 84% 39%);
-  --color-warning: hsl(38 92% 50%);
-  --color-chart-1: hsl(33 51% 17%);
-  --color-chart-2: hsl(28 44% 8%);
-  --color-chart-3: hsl(0 84% 60%);
-  --color-chart-4: hsl(38 92% 50%);
-  --color-chart-5: hsl(160 84% 39%);
-  --color-sidebar: hsl(0 0% 100%);
-  --color-sidebar-foreground: hsl(28 44% 8%);
-  --color-sidebar-border: hsl(48 29% 84%);
+  --color-secondary: hsl(45 22% 91%);
+  --color-secondary-foreground: hsl(155 22% 11%);
+  --color-muted: hsl(45 20% 92%);
+  --color-muted-foreground: hsl(155 9% 43%);
+  --color-accent: hsl(17 78% 52%);
+  --color-accent-foreground: hsl(0 0% 100%);
+  --color-destructive: hsl(3 67% 51%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(40 13% 85%);
+  --color-input: hsl(40 13% 82%);
+  --color-ring: hsl(155 12% 45%);
+  --color-success: hsl(156 42% 37%);
+  --color-warning: hsl(35 78% 48%);
+  --color-sidebar: hsl(158 24% 18%);
+  --color-sidebar-foreground: hsl(45 22% 91%);
+  --color-sidebar-border: hsl(155 17% 24%);
   --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1rem;
 }
 
 @layer base {
   .dark {
     color-scheme: dark;
-    --color-background: hsl(222 73% 4%);
-    --color-foreground: hsl(210 20% 96%);
-    --color-card: hsl(222 47% 8%);
-    --color-card-foreground: hsl(210 20% 96%);
-    --color-popover: hsl(222 47% 8%);
-    --color-popover-foreground: hsl(210 20% 96%);
-    --color-primary: hsl(210 100% 70%);
-    --color-primary-foreground: hsl(222 73% 4%);
-    --color-secondary: hsl(215 32% 17%);
-    --color-secondary-foreground: hsl(210 20% 96%);
-    --color-muted: hsl(215 32% 17%);
-    --color-muted-foreground: hsl(215 16% 65%);
-    --color-accent: hsl(215 32% 17%);
-    --color-accent-foreground: hsl(210 20% 96%);
-    --color-destructive: hsl(0 84% 60%);
-    --color-destructive-foreground: hsl(0 0% 98%);
-    --color-border: hsl(215 32% 17%);
-    --color-input: hsl(215 32% 17%);
-    --color-ring: hsl(210 100% 70%);
-    --color-sidebar: hsl(222 73% 4%);
-    --color-sidebar-foreground: hsl(210 20% 96%);
-    --color-sidebar-border: hsl(215 32% 17%);
-    --color-success: hsl(160 84% 39%);
-    --color-warning: hsl(38 92% 50%);
-    --color-chart-1: hsl(210 100% 70%);
-    --color-chart-2: hsl(210 20% 96%);
-    --color-chart-3: hsl(0 84% 60%);
-    --color-chart-4: hsl(38 92% 50%);
-    --color-chart-5: hsl(160 84% 39%);
+    --color-background: hsl(158 20% 8%);
+    --color-foreground: hsl(42 24% 94%);
+    --color-card: hsl(158 17% 12%);
+    --color-card-foreground: hsl(42 24% 94%);
+    --color-popover: hsl(158 17% 12%);
+    --color-popover-foreground: hsl(42 24% 94%);
+    --color-primary: hsl(17 78% 58%);
+    --color-primary-foreground: hsl(0 0% 100%);
+    --color-secondary: hsl(158 13% 18%);
+    --color-secondary-foreground: hsl(42 24% 94%);
+    --color-muted: hsl(158 13% 18%);
+    --color-muted-foreground: hsl(40 10% 65%);
+    --color-accent: hsl(17 78% 58%);
+    --color-accent-foreground: hsl(0 0% 100%);
+    --color-border: hsl(158 13% 23%);
+    --color-input: hsl(158 13% 26%);
+    --color-ring: hsl(42 12% 68%);
+    --color-sidebar: hsl(158 24% 9%);
+    --color-sidebar-foreground: hsl(42 24% 94%);
+    --color-sidebar-border: hsl(158 13% 20%);
   }
-}
 
-@layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    font-size: 15px;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.035em;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: hsl(17 61% 55% / 0.2);
   }
 }
 
-/* Input Picker Icons (Date, Time) */
+/* Liquid Glass system: a small number of shared layers provide depth without
+   forcing expensive blur onto every node in the application. */
+:root {
+  --glass-base: hsl(0 0% 100% / .48);
+  --glass-subtle: hsl(0 0% 100% / .3);
+  --glass-strong: hsl(0 0% 100% / .68);
+  --glass-border: hsl(0 0% 100% / .56);
+  --glass-shadow: 0 18px 55px hsl(155 24% 12% / .1), 0 2px 8px hsl(155 24% 12% / .05);
+  --glass-highlight: hsl(0 0% 100% / .74);
+  --ambient-orange: hsl(17 78% 52% / .05);
+  --ambient-green: hsl(158 42% 37% / .03);
+}
+
+.dark {
+  --glass-base: hsl(158 23% 17% / .5);
+  --glass-subtle: hsl(158 23% 22% / .4);
+  --glass-strong: hsl(158 23% 24% / .7);
+  --glass-border: hsl(42 24% 94% / .13);
+  --glass-shadow: 0 22px 70px hsl(0 0% 0% / .32), 0 2px 10px hsl(0 0% 0% / .18);
+  --glass-highlight: hsl(42 24% 94% / .16);
+  --ambient-orange: hsl(17 78% 52% / .18);
+  --ambient-green: hsl(158 42% 37% / .15);
+}
+
+.liquid-app {
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(circle at 74% 4%, var(--ambient-orange), transparent 32rem), radial-gradient(circle at 12% 86%, var(--ambient-green), transparent 36rem), var(--color-background);
+}
+
+.liquid-app::before,
+.liquid-app::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(280px);
+  opacity: .5;
+}
+
+.liquid-app::before {
+  width: 23rem;
+  height: 23rem;
+  top: 12%;
+  right: 4%;
+  background: var(--ambient-orange);
+}
+
+.liquid-app::after {
+  width: 29rem;
+  height: 29rem;
+  bottom: 2%;
+  left: 18%;
+  background: var(--ambient-green);
+}
+
+.glass-sidebar,
+.glass-topbar,
+.glass-surface,
+.glass-card,
+.glass-control,
+.glass-dialog,
+.glass-menu {
+  background: var(--glass-base);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
+.glass-sidebar {
+  background: var(--color-sidebar);
+  border-color: hsl(42 24% 94% / .1);
+  box-shadow: 18px 0 60px hsl(155 24% 8% / .12);
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  backdrop-filter: blur(24px) saturate(135%);
+}
+
+.glass-topbar {
+  background: hsl(0 0% 100% / .28);
+  border-color: var(--glass-border);
+  box-shadow: 0 10px 35px hsl(155 24% 12% / .04);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+  backdrop-filter: blur(22px) saturate(130%);
+}
+
+.dark .glass-topbar {
+  background: hsl(158 23% 12% / .38);
+}
+
+.glass-surface {
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+.glass-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--glass-strong), var(--glass-base));
+  border-color: var(--glass-border);
+}
+
+.glass-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  opacity: .8;
+  pointer-events: none;
+}
+
+.glass-control {
+  background: var(--glass-subtle);
+  border-color: hsl(155 16% 43% / .2);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), inset 0 -8px 18px hsl(155 24% 12% / .025);
+}
+
+.glass-control:focus-within,
+.glass-control:focus-visible {
+  border-color: hsl(155 12% 45% / .38);
+  box-shadow: 0 0 0 2px hsl(155 12% 45% / .08), inset 0 1px 0 var(--glass-highlight);
+}
+
+.glass-dialog {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  backdrop-filter: blur(30px) saturate(150%);
+}
+
+.glass-menu {
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+}
+
+.glass-button-primary {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 24px hsl(17 78% 52% / .2), inset 0 1px 0 hsl(0 0% 100% / .32);
+}
+
+.glass-button-primary::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(105deg, transparent 30%, hsl(0 0% 100% / .18), transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .5s ease;
+  pointer-events: none;
+}
+
+.glass-button-primary:hover::before {
+  transform: translateX(120%);
+}
+
+.glass-button-secondary {
+  background: var(--glass-subtle);
+  border-color: var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.glass-overlay {
+  background: hsl(158 24% 8% / .42);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Shared page hierarchy for legacy screens that still own their header markup. */
+main h1:not(.page-title) {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+}
+
+main h1:not(.page-title)::before {
+  display: inline-block;
+  margin-right: .75rem;
+  vertical-align: baseline;
+  color: var(--color-primary);
+  content: var(--page-section, "Main /");
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-button-primary::before {
+    transition: none;
+  }
+}
+
 input[type="date"],
 input[type="time"],
 input[type="month"],
@@ -100,7 +310,7 @@ input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="month"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   position: absolute;
-  left: 0.75rem;
+  left: .75rem;
   margin: 0;
   padding: 0;
   width: 1.2rem;
@@ -116,65 +326,43 @@ input[type="datetime-local"]::-webkit-datetime-edit {
 
 .dark input[type="date"]::-webkit-calendar-picker-indicator,
 .dark input[type="time"]::-webkit-calendar-picker-indicator,
+.dark input[type="month"]::-webkit-calendar-picker-indicator,
 .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: opacity(0.7);
-  cursor: pointer;
+  filter: invert(1) opacity(.7);
 }
 
-.dark input[type="date"]::-webkit-calendar-picker-indicator:hover,
-.dark input[type="time"]::-webkit-calendar-picker-indicator:hover,
-.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
-  filter: opacity(1);
+/* Keep scrolling available while removing visible scrollbar rails everywhere. */
+html,
+body,
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(215 16% 47% / 0.3);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(215 16% 47% / 0.5);
-}
-
-/* Glass effect */
-.glass {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.glass-card {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.dark .glass-card {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Primary text color (formerly gradient) */
 .gradient-text {
   color: var(--color-primary);
 }
 
-/* Primary background (formerly animated gradient) */
 .gradient-bg {
-  background-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
-/* Skeleton animation */
+.glass {
+  background: var(--glass-base);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  backdrop-filter: blur(18px) saturate(135%);
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
@@ -186,7 +374,36 @@ input[type="datetime-local"]::-webkit-datetime-edit {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, hsl(155 9% 43% / .08) 50%, transparent 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Recharts Tooltip Custom Theme & High-Contrast Month Header Styling */
+.recharts-default-tooltip {
+  background-color: var(--color-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.4) !important;
+  color: var(--color-foreground) !important;
+  padding: 10px 14px !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--color-foreground) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  margin-bottom: 6px !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--color-foreground) !important;
+  font-size: 12px !important;
+}
+

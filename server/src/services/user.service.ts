@@ -30,11 +30,20 @@ export class UserService {
 
       try {
         const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
-        const exchangeData = await response.json() as { rates: Record<string, number> };
-        const rate = exchangeData.rates[newCurrency] / exchangeData.rates[oldCurrency];
+        if (!response.ok) throw new Error("Exchange rate API error");
+        
+        const exchangeData = (await response.json()) as { rates: Record<string, number> };
+        const oldRate = exchangeData?.rates?.[oldCurrency];
+        const newRate = exchangeData?.rates?.[newCurrency];
 
-        if (rate && rate !== 1) {
-          // Perform raw database transaction to update all monetary amounts
+        if (!oldRate || !newRate || oldRate <= 0) {
+          throw new Error("Invalid exchange rates returned for requested currencies");
+        }
+
+        const rate = newRate / oldRate;
+
+        if (Number.isFinite(rate) && rate > 0 && rate !== 1) {
+          // Perform raw database transaction to update personal monetary amounts
           await prisma.$transaction([
             prisma.$executeRawUnsafe('UPDATE users SET monthly_salary = monthly_salary * $1, initial_balance = initial_balance * $1 WHERE id = $2', rate, userId),
             prisma.$executeRawUnsafe('UPDATE incomes SET amount = amount * $1 WHERE user_id = $2', rate, userId),
@@ -50,7 +59,6 @@ export class UserService {
             prisma.$executeRawUnsafe('UPDATE insurances SET premium_amount = premium_amount * $1, coverage_amount = coverage_amount * $1 WHERE user_id = $2', rate, userId),
             prisma.$executeRawUnsafe('UPDATE tax_profiles SET estimated_income = estimated_income * $1, total_deductions = total_deductions * $1, estimated_tax = estimated_tax * $1, tax_paid = tax_paid * $1, basic_salary = basic_salary * $1, hra = hra * $1, lta = lta * $1, special_allowance = special_allowance * $1, pf_deduction = pf_deduction * $1, pt_deduction = pt_deduction * $1, investments_80c = investments_80c * $1, medical_80d = medical_80d * $1, education_loan_80e = education_loan_80e * $1, home_loan_interest_24b = home_loan_interest_24b * $1, nps_80ccd = nps_80ccd * $1, other_deductions = other_deductions * $1 WHERE user_id = $2', rate, userId),
             prisma.$executeRawUnsafe('UPDATE smart_savings SET expected_cost = expected_cost * $1, actual_cost = actual_cost * $1, money_saved = money_saved * $1 WHERE user_id = $2', rate, userId),
-            prisma.$executeRawUnsafe('UPDATE shared_wallets SET balance = balance * $1 WHERE family_group_id IN (SELECT group_id FROM group_members WHERE user_id = $2)', rate, userId),
             prisma.$executeRawUnsafe('UPDATE shared_wallet_transactions SET amount = amount * $1 WHERE user_id = $2', rate, userId),
           ]);
         }
@@ -59,6 +67,7 @@ export class UserService {
         throw new AppError(500, "CURRENCY_CONVERSION_FAILED", "Failed to convert historical data to new currency");
       }
     }
+
     
     // Only allow setting initialBalance if it is currently null
     if (data.initialBalance !== undefined) {

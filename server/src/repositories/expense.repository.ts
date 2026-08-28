@@ -180,12 +180,12 @@ export class ExpenseRepository {
     const breakdown: Record<string, { name: string; color: string; icon: string; total: number; count: number }> = {};
 
     for (const expense of expenses) {
-      const catId = expense.category.id;
+      const catId = expense.category?.id || 'uncategorized';
       if (!breakdown[catId]) {
         breakdown[catId] = {
-          name: expense.category.name,
-          color: expense.category.color,
-          icon: expense.category.icon,
+          name: expense.category?.name || 'Uncategorized',
+          color: expense.category?.color || '#9ca3af',
+          icon: expense.category?.icon || 'help-circle',
           total: 0,
           count: 0,
         };
@@ -193,6 +193,7 @@ export class ExpenseRepository {
       breakdown[catId].total += Number(expense.amount);
       breakdown[catId].count += 1;
     }
+
 
     return Object.entries(breakdown)
       .map(([id, data]) => ({ id, ...data }))

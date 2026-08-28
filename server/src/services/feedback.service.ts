@@ -1,8 +1,8 @@
-import { PrismaClient, Feedback } from "@prisma/client";
+import { Feedback } from "@prisma/client";
+import { prisma } from "../config/database";
 import { storageService } from "./storage.service";
 import { notificationService } from "./notification.service";
 
-const prisma = new PrismaClient();
 
 export const feedbackService = {
   async create(data: {

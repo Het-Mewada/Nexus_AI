@@ -42,12 +42,12 @@ export const adminController = {
         return;
       }
 
-      const user = await adminService.updateUserStatus(id as string, status as "ACTIVE" | "SUSPENDED");
+      const user = await adminService.updateUserStatus(id as string, status as "ACTIVE" | "SUSPENDED", req.user!.id);
       res.json({ success: true, data: user });
       return;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Admin update user error:", error);
-      res.status(500).json({ success: false, error: { message: "Failed to update user" } });
+      res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || "Failed to update user" } });
     }
   },
 
@@ -55,20 +55,23 @@ export const adminController = {
     try {
       const { id } = req.params;
 
-      // We should also delete the user from Supabase auth
+      // Ensure admin cannot delete themselves
+      await adminService.deleteUser(id as string, req.user!.id);
+
+      // Delete from Supabase auth
       const dbUser = await prisma.user.findUnique({ where: { id: id as string } });
       if (dbUser) {
         await supabaseAdmin.auth.admin.deleteUser(dbUser.supabaseId);
       }
 
-      await adminService.deleteUser(id as string);
       res.json({ success: true, data: { message: "User deleted" } });
       return;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("Admin delete user error:", error);
-      res.status(500).json({ success: false, error: { message: "Failed to delete user" } });
+      res.status(error.statusCode || 500).json({ success: false, error: { message: error.message || "Failed to delete user" } });
     }
   },
+
 
   async listFeedbacks(req: AuthRequest, res: Response) {
     try {

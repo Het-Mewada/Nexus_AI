@@ -47,7 +47,7 @@ export default function WealthPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">Wealth Command Center</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Wealth Command Center</h2>
           <p className="text-muted-foreground mt-1">
             Manage your investments, liabilities, and insurance all in one place.
           </p>
