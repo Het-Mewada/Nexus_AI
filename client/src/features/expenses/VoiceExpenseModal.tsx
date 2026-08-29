@@ -48,14 +48,17 @@ export function VoiceExpenseModal({ isOpen, onClose, onSuccess }: VoiceExpenseMo
   const {
     isSupported,
     isListening,
+    isTranscribing,
     transcript,
     interimTranscript,
     error: sttError,
+    provider: sttProvider,
     startListening,
     stopListening,
     resetTranscript,
     setTranscript,
-  } = useSpeechRecognition({ lang: "en-IN" });
+  } = useSpeechRecognition({ lang: "en-IN", preferDeepgram: true });
+
 
   const [extractedData, setExtractedData] = useState<ExtractedVoiceExpense | null>(null);
 
@@ -236,7 +239,17 @@ export function VoiceExpenseModal({ isOpen, onClose, onSuccess }: VoiceExpenseMo
           {!extractedData && (
             <div className="space-y-4">
               <div className="relative rounded-2xl border border-border/80 bg-secondary/30 p-6 text-center shadow-inner">
-                {isListening ? (
+                {isTranscribing ? (
+                  <div className="space-y-4">
+                    <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/20">
+                      <Sparkles className="h-10 w-10 text-primary animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-primary">Transcribing with Deepgram Nova-2...</p>
+                      <p className="text-xs text-muted-foreground mt-1">Processing recorded audio via high-accuracy AI engine.</p>
+                    </div>
+                  </div>
+                ) : isListening ? (
                   <div className="space-y-4">
                     <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/20">
                       <motion.div
@@ -247,8 +260,10 @@ export function VoiceExpenseModal({ isOpen, onClose, onSuccess }: VoiceExpenseMo
                       <Mic className="h-10 w-10 text-primary animate-pulse" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-primary">Listening continuously...</p>
-                      <p className="text-xs text-muted-foreground mt-1">Speak at your own pace. Microphone will remain active until you click Stop Recording.</p>
+                      <p className="text-sm font-semibold text-primary flex items-center justify-center gap-1.5">
+                        Recording HD Audio...
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Speak clearly. When finished, click Stop Recording to transcribe with Deepgram AI.</p>
                     </div>
 
                     <Button variant="destructive" size="sm" onClick={handleStopRecording} className="gap-2">
@@ -265,19 +280,22 @@ export function VoiceExpenseModal({ isOpen, onClose, onSuccess }: VoiceExpenseMo
                       <Mic className="h-9 w-9 transition-transform group-hover:scale-110" />
                     </button>
                     <div>
-                      <p className="text-sm font-semibold">Click microphone to speak</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">or type your expense description in the text box below</p>
+                      <p className="text-sm font-semibold flex items-center justify-center gap-2">
+                        Click microphone to speak
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Powered by Deepgram Nova-2 AI Speech Recognition</p>
                     </div>
                   </div>
                 )}
 
                 {sttError && (
-                  <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-destructive/10 p-3 text-xs font-medium text-destructive">
+                  <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-amber-500/10 p-3 text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     <span>{sttError}</span>
                   </div>
                 )}
               </div>
+
 
               {/* Natural Textarea */}
               <div className="space-y-2">

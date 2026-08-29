@@ -174,12 +174,21 @@ router.use("/calendar", calendarRoutes);
 router.use("/market", marketRoutes);
 
 // ─── AI ──────────────────────────────────────────
+import multer from "multer";
 import { aiController } from "../controllers/ai.controller";
 import { voiceExpenseController } from "../controllers/voice-expense.controller";
+
+const audioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
+});
+
 router.get("/ai/insights", authMiddleware, aiController.getInsights);
 router.post("/ai/chat", authMiddleware, aiController.chat);
 router.post("/ai/categorize", authMiddleware, aiController.categorize);
 router.post("/ai/parse-voice-expense", authMiddleware, voiceExpenseController.parseVoiceExpense);
+router.post("/ai/transcribe-audio", authMiddleware, audioUpload.single("audio"), voiceExpenseController.transcribeAudio);
+
 
 
 // ─── Phase 4A: Conversations (AI Memory) ─────────

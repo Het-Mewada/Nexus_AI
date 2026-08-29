@@ -144,7 +144,17 @@ export const aiApi = {
   categorize: (merchant: string, description?: string) => api.post<ApiResponse<{ category: string }>>("/ai/categorize", { merchant, description }).then((r) => r.data),
   parseVoiceExpense: (text: string, userTimezone?: string) =>
     api.post<ApiResponse<ExtractedVoiceExpense>>("/ai/parse-voice-expense", { text, userTimezone }).then((r) => r.data),
+  transcribeAudio: (audioBlob: Blob, lang?: string) => {
+    const formData = new FormData();
+    formData.append("audio", audioBlob, "audio.webm");
+    return api.post<ApiResponse<{ transcript: string; confidence: number; provider: string }>>(
+      `/ai/transcribe-audio${lang ? `?lang=${lang}` : ""}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    ).then((r) => r.data);
+  },
 };
+
 
 
 // ─── Budgets ─────────────────────────────────────

@@ -70,30 +70,48 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:flex-1 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12">
+      {/* Left panel with High-Tech Financial AI Image */}
+      <div className="hidden lg:flex lg:flex-1 relative overflow-hidden bg-slate-950">
+        <img
+          src="/login-bg.png"
+          alt="Nexus AI Platform"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-75 transition-scale duration-700 hover:scale-105"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/20 backdrop-blur-[2px]" />
+
+        <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-[12px] bg-primary flex items-center justify-center text-xl font-extrabold text-white shadow-lg shadow-primary/30">
+              n
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">Nexus AI</span>
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center"
+            className="space-y-4 max-w-lg"
           >
-            <div className="flex items-center justify-center mb-8">
-              <div className="h-16 w-16 rounded-[18px] bg-accent flex items-center justify-center text-3xl font-extrabold">
-                n
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold mb-4">Nexus AI</h1>
-            <p className="text-xl text-white/80 max-w-md">
-              Manage your entire life with intelligent tracking, agents, and analytics.
+            <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary backdrop-blur-md">
+              ✨ Next-Gen Financial Intelligence OS
+            </span>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white leading-tight">
+              Manage your entire life with perspective
+            </h1>
+            <p className="text-base text-slate-300 leading-relaxed">
+              Intelligent tracking, autonomous CFO agents, deep analytics, and voice-assisted organization.
             </p>
           </motion.div>
-          {/* Decorative circles */}
-          <div className="absolute inset-x-12 bottom-16 h-px bg-white/15" />
-          <div className="absolute left-12 bottom-12 text-[11px] uppercase tracking-[0.22em] text-white/45">Personal finance, with perspective</div>
+
+          <div className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-slate-400">
+            <span>Personal Finance OS</span>
+            <span>v2.0 Connected</span>
+          </div>
         </div>
       </div>
+
 
       {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">

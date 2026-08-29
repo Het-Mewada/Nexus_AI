@@ -2,6 +2,7 @@ import { Response, NextFunction } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { prisma } from "../config/database";
 import { voiceExpenseService } from "../services/voice-expense.service";
+import { deepgramService } from "../services/deepgram.service";
 import { sendSuccess } from "../utils/response";
 
 export class VoiceExpenseController {
@@ -50,6 +51,27 @@ export class VoiceExpenseController {
       next(error);
     }
   }
+
+  async transcribeAudio(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const file = req.file;
+      if (!file || !file.buffer) {
+        res.status(400).json({
+          success: false,
+          error: { message: "No audio file provided. Please record or upload an audio file." },
+        });
+        return;
+      }
+
+      const lang = (req.query.lang as string) || "en-IN";
+      const result = await deepgramService.transcribeAudio(file.buffer, file.mimetype, lang);
+
+      sendSuccess(res, result, "Audio transcribed successfully via Deepgram");
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const voiceExpenseController = new VoiceExpenseController();
+

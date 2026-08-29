@@ -14,7 +14,9 @@ const envSchema = z.object({
   STORAGE_BUCKET: z.string().default("receipts"),
   GEMINI_API_KEY: z.string().optional().default(""),
   OPENAI_API_KEY: z.string().optional().default(""),
+  DEEPGRAM_API_KEY: z.string().optional().default(""),
   GROQ_API_KEY: z.string().optional().default(""),
+
   OPENROUTER_API_KEY: z.string().optional().default(""),
   OLLAMA_HOST: z.string().optional().default("http://localhost:11434"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
