@@ -173,7 +173,8 @@ export default function DataClearPage() {
                 onChange={(e) => setTargetEmail(e.target.value)}
                 className="bg-secondary/40 font-mono text-sm pl-9"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+
             </div>
           </div>
 

@@ -58,14 +58,15 @@ export default function MarketSearchTab() {
         <CardContent className="p-6">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10 pointer-events-none" />
               <Input 
                 placeholder="Search stocks (e.g., RELIANCE.NS, TCS.NS)" 
-                className="pl-10 py-6 text-lg rounded-xl border-primary/20 focus-visible:ring-primary/30"
+                className="pl-11 py-6 text-lg rounded-xl border-primary/20 focus-visible:ring-primary/30"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+
             <Button type="submit" size="lg" className="rounded-xl px-8 h-[50px] font-semibold">Search</Button>
           </form>
         </CardContent>

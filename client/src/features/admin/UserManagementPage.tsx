@@ -62,14 +62,15 @@ export default function UserManagementPage() {
         
         <div className="flex gap-2 w-full md:w-auto">
           <div className="relative w-full md:w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
             <Input 
               placeholder="Search by name or email" 
-              className="pl-8" 
+              className="pl-9" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
         </div>
       </div>
 

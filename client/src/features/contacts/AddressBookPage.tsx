@@ -188,7 +188,7 @@ function ContactsTab() {
     <div className="space-y-6 mt-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
           <Input
             placeholder="Search contacts by name, email, phone..."
             className="pl-9"
@@ -196,6 +196,7 @@ function ContactsTab() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => loginGoogle()}>
             <RefreshCcw className="mr-2 h-4 w-4" />
@@ -456,7 +457,7 @@ function AddressesTab() {
     <div className="space-y-6 mt-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
           <Input
             placeholder="Search addresses by title, city..."
             className="pl-9"
@@ -464,6 +465,7 @@ function AddressesTab() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
         <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Address

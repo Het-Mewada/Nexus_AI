@@ -58,9 +58,10 @@ export default function ForgotPasswordPage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="email" type="email" placeholder="you@example.com" className="pl-9" {...register("email")} />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+                  <Input id="email" type="email" placeholder="you@example.com" className="pl-10" {...register("email")} />
                 </div>
+
                 {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
               </div>
               <Button type="submit" className="w-full" variant="gradient" size="lg" disabled={isLoading}>
