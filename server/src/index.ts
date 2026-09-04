@@ -39,7 +39,14 @@ app.get("/api/health", (_req, res) => {
     },
   });
 });
+const dbUrl = new URL(process.env.DATABASE_URL);
 
+console.log({
+  databaseHost: dbUrl.hostname,
+  databaseName: dbUrl.pathname,
+  databaseUser: dbUrl.username,
+  databasePort: dbUrl.port,
+});
 // ─── API Routes ──────────────────────────────────
 app.use("/api", routes);
 
