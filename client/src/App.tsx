@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { CustomCursor } from "@/components/ui/CustomCursor";
 import { AuthGuard, GuestGuard, AdminGuard, FeatureGuard } from "@/components/guards";
 import { DashboardLayout } from "@/app/layouts/DashboardLayout";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -157,6 +158,7 @@ export default function App() {
                 </Routes>
               </Suspense>
             </BrowserRouter>
+            <CustomCursor />
             <ToastProvider />
           </AuthProvider>
         </ThemeProvider>

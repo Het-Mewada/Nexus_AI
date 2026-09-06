@@ -38,6 +38,22 @@ export const uploadAttachments = multer({
   },
 });
 
+export const uploadAvatar = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG, WebP, and GIF images are allowed for avatars."));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+    files: 1,
+  },
+});
+
 export function generateFilePath(originalName: string, userId: string): string {
   const ext = path.extname(originalName);
   const uniqueName = `${uuidv4()}${ext}`;

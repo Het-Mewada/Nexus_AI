@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Bell, Palette, Trash2, Lock, Fingerprint } from "lucide-react";
+import { Bell, Palette, Trash2, Lock, Fingerprint, Camera, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,32 @@ export default function SettingsPage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const { resetPassword, registerPasskey } = useAuth();
   const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file size must be less than 5MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    setIsUploadingAvatar(true);
+    try {
+      await userApi.uploadAvatar(formData);
+      toast.success("Profile picture updated");
+      refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || "Failed to upload profile picture");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -139,12 +165,39 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={user?.avatarUrl || undefined} />
-                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">{getInitials(user?.name || user?.email || "U")}</AvatarFallback>
-                </Avatar>
+                <div className="relative group cursor-pointer">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={user?.avatarUrl || undefined} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">{getInitials(user?.name || user?.email || "U")}</AvatarFallback>
+                  </Avatar>
+                  <label
+                    htmlFor="avatar-upload-input"
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs font-medium"
+                    title="Upload profile picture"
+                  >
+                    <Camera className="h-6 w-6 mb-0.5" />
+                    <span>{isUploadingAvatar ? "Uploading..." : "Change"}</span>
+                  </label>
+                  <input
+                    id="avatar-upload-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                    disabled={isUploadingAvatar}
+                  />
+                </div>
                 <div className="space-y-1 text-center sm:text-left">
-                  <h3 className="font-semibold text-xl">{user?.name}</h3>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <h3 className="font-semibold text-xl">{user?.name}</h3>
+                    <label
+                      htmlFor="avatar-upload-input"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline cursor-pointer"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{isUploadingAvatar ? "Uploading picture..." : "Upload picture"}</span>
+                    </label>
+                  </div>
                   <p className="text-muted-foreground">{user?.email}</p>
                 </div>
               </div>

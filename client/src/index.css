@@ -98,6 +98,13 @@
   ::selection {
     background: hsl(17 61% 55% / 0.2);
   }
+
+  /* Hide default native cursor on desktop/fine-pointer devices */
+  @media (pointer: fine) {
+    *, *::before, *::after, body, html, button, a, input, select, textarea, label {
+      cursor: none !important;
+    }
+  }
 }
 
 /* Liquid Glass system: a small number of shared layers provide depth without

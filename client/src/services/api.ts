@@ -11,6 +11,10 @@ import type {
 export const userApi = {
   getProfile: () => api.get<ApiResponse<User>>("/users/me").then((r) => r.data),
   updateProfile: (data: Partial<User>) => api.patch<ApiResponse<User>>("/users/me", data).then((r) => r.data),
+  uploadAvatar: (data: FormData) =>
+    api.post<ApiResponse<User>>("/users/me/avatar", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data),
   deleteAccount: () => api.delete<ApiResponse<{ message: string }>>("/users/me").then((r) => r.data),
 };
 

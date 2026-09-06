@@ -474,6 +474,7 @@ export interface Contact {
   birthday: string | null;
   socialMediaLinks: Record<string, string> | null;
   tags: string[];
+  isGoogleSynced?: boolean;
   createdAt: string;
   updatedAt: string;
 }

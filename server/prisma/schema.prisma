@@ -832,6 +832,7 @@ model Contact {
   birthday      DateTime?
   socialMediaLinks Json?     @map("social_media_links")
   tags          String[]
+  isGoogleSynced Boolean   @default(false) @map("is_google_synced")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

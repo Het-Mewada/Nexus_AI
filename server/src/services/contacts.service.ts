@@ -75,6 +75,9 @@ export class ContactsService {
 
   async deleteContact(userId: string, id: string) {
     const contact = await this.getContact(userId, id);
+    if ((contact as any).isGoogleSynced || contact.tags?.includes('Google Sync') || contact.tags?.includes('google-synced')) {
+      throw Object.assign(new Error('Google synced contacts are non-deletable'), { statusCode: 400 });
+    }
     await prisma.contact.delete({
       where: { id: contact.id },
     });

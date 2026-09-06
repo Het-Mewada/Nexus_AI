@@ -27,7 +27,7 @@ import calendarRoutes from "./calendar.routes";
 import contactsRoutes from "./contacts.routes";
 import addressesRoutes from "./addresses.routes";
 import { validate } from "../middleware/validate";
-import { uploadReceipt } from "../middleware/upload";
+import { uploadReceipt, uploadAvatar } from "../middleware/upload";
 import { authLimiter } from "../middleware/rateLimiter";
 import {
   updateProfileSchema,
@@ -68,6 +68,7 @@ router.post("/auth/sync", authLimiter, authMiddleware, authController.syncUser);
 // ─── User ────────────────────────────────────────
 router.get("/users/me", authMiddleware, userController.getProfile);
 router.patch("/users/me", authMiddleware, validate(updateProfileSchema), userController.updateProfile);
+router.post("/users/me/avatar", authMiddleware, uploadAvatar.single("avatar"), userController.uploadAvatar);
 router.delete("/users/me", authMiddleware, userController.deleteAccount);
 
 // ─── Income ──────────────────────────────────────

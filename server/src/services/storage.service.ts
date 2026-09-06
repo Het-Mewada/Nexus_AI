@@ -2,8 +2,36 @@ import { supabaseAdmin } from "../config/supabase";
 import { env } from "../config/env";
 import { generateFilePath } from "../middleware/upload";
 import { logger } from "../utils/logger";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 export class StorageService {
+  async uploadAvatar(file: Express.Multer.File, userId: string) {
+    const ext = path.extname(file.originalname) || ".png";
+    const filePath = `avatars/${userId}/${uuidv4()}${ext}`;
+
+    const { error } = await supabaseAdmin.storage
+      .from(env.STORAGE_BUCKET)
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (error) {
+      logger.error("Storage upload avatar failed:", error);
+      throw new Error("Failed to upload profile picture");
+    }
+
+    const { data: urlData } = supabaseAdmin.storage
+      .from(env.STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    return {
+      path: filePath,
+      publicUrl: urlData.publicUrl,
+    };
+  }
+
   async uploadReceipt(file: Express.Multer.File, userId: string) {
     const filePath = generateFilePath(file.originalname, userId);
 

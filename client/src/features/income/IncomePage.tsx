@@ -335,8 +335,7 @@ export default function IncomePage() {
 
         <aside className="space-y-4 xl:sticky xl:top-6">
           <div className="rounded-[16px] border border-border/80 bg-primary p-5 text-primary-foreground">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground/60">This view</p>
-            <p className="mt-3 font-display text-4xl font-extrabold tracking-[-0.06em]">{meta?.total ?? incomes.length}</p>
+            <p className="font-display text-4xl font-extrabold tracking-[-0.06em]">{meta?.total ?? incomes.length}</p>
             <p className="mt-1 text-sm text-primary-foreground/70">inflow records</p>
             <div className="mt-6 border-t border-primary-foreground/15 pt-4 text-xs text-primary-foreground/65">
               Track recurring salary, freelance work, or custom deposits cleanly.

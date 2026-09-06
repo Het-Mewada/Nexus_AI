@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Phone, Mail, Edit2, Trash2, Calendar, Tag, Link2, MapPin, RefreshCcw } from "lucide-react";
+import { Search, Plus, Phone, Mail, Edit2, Trash2, Calendar, Tag, Link2, MapPin, RefreshCcw, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -154,6 +154,8 @@ function ContactsTab() {
             name: person.names?.[0]?.displayName,
             email: person.emailAddresses?.[0]?.value || null,
             phone: person.phoneNumbers?.[0]?.value || null,
+            isGoogleSynced: true,
+            tags: ["Google Sync"],
           }));
 
           await contactsApi.bulkCreate(chunk);
@@ -215,27 +217,43 @@ function ContactsTab() {
         ) : contactsResponse?.data?.length === 0 ? (
           <p className="text-muted-foreground col-span-full text-center py-12">No contacts found.</p>
         ) : (
-          contactsResponse?.data?.map((contact) => (
-            <Card key={contact.id} className="hover:shadow-md transition-shadow relative group">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{contact.name}</h3>
-                    {contact.relationship && (
-                      <span className="inline-block px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full mt-1">
-                        {contact.relationship}
-                      </span>
-                    )}
+          contactsResponse?.data?.map((contact) => {
+            const isGoogleSynced = Boolean(
+              contact.isGoogleSynced ||
+              contact.tags?.some(t => t.toLowerCase().includes("google")) ||
+              contact.tags?.includes("Google Sync")
+            );
+
+            return (
+              <Card key={contact.id} className="hover:shadow-md transition-shadow relative group">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-lg">{contact.name}</h3>
+                        {isGoogleSynced && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold rounded-full border border-blue-500/20">
+                            <Lock className="h-3 w-3 shrink-0" /> Google Synced
+                          </span>
+                        )}
+                      </div>
+                      {contact.relationship && (
+                        <span className="inline-block px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full mt-1">
+                          {contact.relationship}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(contact)}>
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      {!isGoogleSynced && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete contact?')) deleteMutation.mutate(contact.id) }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(contact)}>
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => { if (confirm('Delete contact?')) deleteMutation.mutate(contact.id) }}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
 
                 <div className="space-y-3 text-sm text-muted-foreground">
                   {contact.email && (
@@ -283,8 +301,9 @@ function ContactsTab() {
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          );
+        })
+      )}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

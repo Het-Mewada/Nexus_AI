@@ -318,7 +318,7 @@ export default function ExpensesPage() {
         </section>
 
         <aside className="space-y-4 xl:sticky xl:top-6">
-          <div className="rounded-[16px] border border-border/80 bg-primary p-5 text-primary-foreground"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground/60">This view</p><p className="mt-3 font-display text-4xl font-extrabold tracking-[-0.06em]">{meta?.total ?? expenses.length}</p><p className="mt-1 text-sm text-primary-foreground/70">expenses recorded</p><div className="mt-6 border-t border-primary-foreground/15 pt-4 text-xs text-primary-foreground/65">Use filters to narrow the list without losing your current sort.</div></div>
+          <div className="rounded-[16px] border border-border/80 bg-primary p-5 text-primary-foreground"><p className="font-display text-4xl font-extrabold tracking-[-0.06em]">{meta?.total ?? expenses.length}</p><p className="mt-1 text-sm text-primary-foreground/70">expenses recorded</p><div className="mt-6 border-t border-primary-foreground/15 pt-4 text-xs text-primary-foreground/65">Use filters to narrow the list without losing your current sort.</div></div>
           <div className="rounded-[16px] border border-border/80 bg-card p-5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Quick note</p><p className="mt-3 text-sm leading-6 text-muted-foreground">Receipts can be scanned from the add expense flow and reviewed before saving.</p><Button variant="link" className="mt-2 h-auto p-0 text-primary" onClick={() => { setActiveTab("scan"); setIsOpen(true); }}>Open scan flow <span aria-hidden="true">→</span></Button></div>
 
         </aside>
