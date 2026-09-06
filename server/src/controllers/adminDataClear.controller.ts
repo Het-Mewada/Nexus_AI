@@ -4,7 +4,7 @@ import { dataClearService } from "../services/dataClear.service";
 export class AdminDataClearController {
   async clearUserData(req: Request, res: Response): Promise<void> {
     try {
-      const { email, features, confirmDelete, confirmEmail } = req.body;
+      const { email, features, confirmDelete, confirmEmail, includeSyncedContacts } = req.body;
 
       if (!email || typeof email !== "string") {
         res.status(400).json({ error: "Target user email is required" });
@@ -20,6 +20,7 @@ export class AdminDataClearController {
         userEmail: email,
         features: features || {},
         confirmDelete: Boolean(confirmDelete),
+        includeSyncedContacts: Boolean(includeSyncedContacts),
       });
 
       res.json({

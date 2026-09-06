@@ -19,6 +19,7 @@ export interface FeatureSelection {
   events?: boolean;
   customCategories?: boolean;
   initialBalance?: boolean;
+  contacts?: boolean;
 }
 
 
@@ -26,6 +27,7 @@ export interface DataClearOptions {
   userEmail: string;
   features: FeatureSelection;
   confirmDelete: boolean;
+  includeSyncedContacts?: boolean;
 }
 
 export interface DomainClearResult {
@@ -328,6 +330,73 @@ export class DataClearService {
       }
       results.push({ domain: "Initial Balance", requested: true, deletedCount, protectedCount: 0 });
       totalDeleted += deletedCount;
+    }
+
+    // 19. CONTACTS & ADDRESSES
+    if (features.contacts) {
+      const includeSynced = Boolean(options.includeSyncedContacts);
+
+      let protectedCount = 0;
+      if (!includeSynced) {
+        protectedCount = await prisma.contact.count({
+          where: {
+            userId,
+            OR: [
+              { isGoogleSynced: true },
+              { tags: { hasSome: ["Google Sync", "google-synced"] } },
+            ],
+          },
+        });
+      }
+
+      let deletedContactsCount = 0;
+      let deletedAddressesCount = 0;
+
+      if (confirmDelete) {
+        if (includeSynced) {
+          const deletedC = await prisma.contact.deleteMany({ where: { userId } });
+          deletedContactsCount = deletedC.count;
+        } else {
+          const deletedC = await prisma.contact.deleteMany({
+            where: {
+              userId,
+              isGoogleSynced: false,
+              NOT: {
+                tags: { hasSome: ["Google Sync", "google-synced"] },
+              },
+            },
+          });
+          deletedContactsCount = deletedC.count;
+        }
+
+        const deletedA = await prisma.address.deleteMany({ where: { userId } });
+        deletedAddressesCount = deletedA.count;
+      } else {
+        if (includeSynced) {
+          deletedContactsCount = await prisma.contact.count({ where: { userId } });
+        } else {
+          deletedContactsCount = await prisma.contact.count({
+            where: {
+              userId,
+              isGoogleSynced: false,
+              NOT: {
+                tags: { hasSome: ["Google Sync", "google-synced"] },
+              },
+            },
+          });
+        }
+        deletedAddressesCount = await prisma.address.count({ where: { userId } });
+      }
+
+      const totalDeletedCount = deletedContactsCount + deletedAddressesCount;
+      results.push({
+        domain: "Contacts & Addresses",
+        requested: true,
+        deletedCount: totalDeletedCount,
+        protectedCount,
+      });
+      totalDeleted += totalDeletedCount;
+      totalProtected += protectedCount;
     }
 
     return {

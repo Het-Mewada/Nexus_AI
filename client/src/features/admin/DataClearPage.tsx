@@ -5,7 +5,7 @@ import {
   ShieldAlert, Trash2, Search, CheckSquare, Square, RefreshCw,
   Lock, AlertTriangle, FileText, CheckCircle2, Wallet, Receipt,
   PieChart, Target, Calendar, CreditCard, Shield, TrendingUp, Building,
-  FileCheck, Bell, Activity, Tag, Sparkles, Coins
+  FileCheck, Bell, Activity, Tag, Sparkles, Coins, Users
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,7 @@ const DOMAINS: DomainDefinition[] = [
   { key: "taxProfiles", name: "Tax Profiles", description: "Tax estimations & regime choices", icon: FileCheck, group: "wealth" },
 
   // System
+  { key: "contacts", name: "Contacts & Addresses", description: "Personal address book contacts & addresses", icon: Users, protectedNotice: "Google Synced contacts protected", group: "system" },
   { key: "smartSavings", name: "Smart Savings", description: "Smart savings log entries", icon: Sparkles, group: "system" },
   { key: "notifications", name: "Notifications", description: "System & alert notifications", icon: Bell, group: "system" },
   { key: "auditLogs", name: "Audit Logs", description: "User activity audit history", icon: Activity, group: "system" },
@@ -63,10 +64,11 @@ export default function DataClearPage() {
     incomes: true,
   });
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [includeSyncedContacts, setIncludeSyncedContacts] = useState(false);
   const [lastReport, setLastReport] = useState<any>(null);
 
   const clearMutation = useMutation({
-    mutationFn: (data: { email: string; features: Record<string, boolean>; confirmDelete: boolean; confirmEmail?: string }) =>
+    mutationFn: (data: { email: string; features: Record<string, boolean>; confirmDelete: boolean; confirmEmail?: string; includeSyncedContacts?: boolean }) =>
       adminApi.clearUserData(data),
     onSuccess: (res: any) => {
       const reportData = res.data?.report || res.report;
@@ -121,6 +123,7 @@ export default function DataClearPage() {
     clearMutation.mutate({
       email: targetEmail.trim(),
       features: selectedDomains,
+      includeSyncedContacts,
       confirmDelete: false,
     });
   };
@@ -133,6 +136,7 @@ export default function DataClearPage() {
     clearMutation.mutate({
       email: targetEmail.trim(),
       features: selectedDomains,
+      includeSyncedContacts,
       confirmDelete: true,
       confirmEmail: confirmEmailInput.trim(),
     });
@@ -364,9 +368,24 @@ export default function DataClearPage() {
                 <AlertTriangle className="h-4 w-4 shrink-0" /> Irreversible Operation
               </p>
               <p className="leading-relaxed">
-                Non-synced data in selected domains will be deleted immediately. Auto-synced restricted records are protected and will be skipped.
+                Non-synced data in selected domains will be deleted immediately. Auto-synced restricted records are protected and will be skipped unless explicitly requested below.
               </p>
             </div>
+
+            {selectedDomains.contacts && (
+              <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3.5 space-y-2">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-foreground">
+                  <Checkbox
+                    checked={includeSyncedContacts}
+                    onCheckedChange={(checked) => setIncludeSyncedContacts(Boolean(checked))}
+                  />
+                  <span>Delete Google Synced contacts as well?</span>
+                </label>
+                <p className="text-[11px] text-muted-foreground leading-normal pl-6">
+                  Google Synced contacts are protected by default. Checking this option will permanently delete Google Synced contacts for this user as well.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold">

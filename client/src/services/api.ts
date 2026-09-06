@@ -46,6 +46,7 @@ export const adminApi = {
     features: Record<string, boolean>;
     confirmDelete: boolean;
     confirmEmail?: string;
+    includeSyncedContacts?: boolean;
   }) => api.post<ApiResponse<any>>("/admin/clear-user-data", data).then((r) => r.data),
 };
 
