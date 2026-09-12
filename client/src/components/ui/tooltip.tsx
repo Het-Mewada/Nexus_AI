@@ -38,12 +38,28 @@ export function ActionTooltip({ content, children, className, side = "top" }: Ac
         });
       }
     } else if (side === "bottom") {
-      setStyle({
-        position: "fixed",
-        top: `${rect.bottom + 8}px`,
-        left: `${rect.left + rect.width / 2}px`,
-        transform: "translateX(-50%)",
-      });
+      const isNearLeftEdge = rect.left < 160;
+      const isNearRightEdge = viewportWidth - rect.right < 160;
+      if (isNearLeftEdge) {
+        setStyle({
+          position: "fixed",
+          top: `${rect.bottom + 8}px`,
+          left: `${Math.max(12, rect.left)}px`,
+        });
+      } else if (isNearRightEdge) {
+        setStyle({
+          position: "fixed",
+          top: `${rect.bottom + 8}px`,
+          right: `${Math.max(12, viewportWidth - rect.right)}px`,
+        });
+      } else {
+        setStyle({
+          position: "fixed",
+          top: `${rect.bottom + 8}px`,
+          left: `${rect.left + rect.width / 2}px`,
+          transform: "translateX(-50%)",
+        });
+      }
     } else if (side === "left") {
       setStyle({
         position: "fixed",
@@ -93,7 +109,7 @@ export function ActionTooltip({ content, children, className, side = "top" }: Ac
             role="tooltip"
             style={style}
             className={cn(
-              "pointer-events-none z-[9999] whitespace-nowrap rounded-lg bg-popover px-3 py-1.5 text-xs font-medium text-popover-foreground shadow-xl border border-border animate-in fade-in-0 zoom-in-95",
+              "pointer-events-none z-[999999] whitespace-nowrap rounded-lg bg-popover px-3 py-1.5 text-xs font-medium text-popover-foreground shadow-xl border border-border animate-in fade-in-0 zoom-in-95",
               className
             )}
           >

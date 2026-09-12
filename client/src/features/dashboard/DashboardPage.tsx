@@ -15,6 +15,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { DashboardSummary, ChartData } from "@/types";
 import { AgentInsights } from "@/features/ai-advisor/components/AgentInsights";
 import { PageHeader } from "@/components/ui/page-header";
+import { ActionTooltip } from "@/components/ui/tooltip";
 
 const container = {
   hidden: { opacity: 0 },
@@ -151,18 +152,31 @@ export default function DashboardPage() {
                   <p className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {stat.title}
                     {index === 0 && user?.initialBalance == null && (
-                      <span
-                        aria-label="Initial balance is not set. Set it in Settings, Profile, Initial Balance."
-                        tabIndex={0}
-                        className="group/initial-balance relative inline-flex cursor-help rounded-sm text-warning outline-none focus-visible:ring-2 focus-visible:ring-warning/40"
+                      <ActionTooltip
+                        side="bottom"
+                        className="w-78 p-3.5 bg-popover/95 backdrop-blur-md border border-warning/30 rounded-xl shadow-2xl text-popover-foreground z-[999999] whitespace-normal"
+                        content={
+                          <div className="space-y-1 text-xs leading-relaxed text-left">
+                            <span className="block font-bold text-warning flex items-center gap-1.5">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" /> Initial balance needed
+                            </span>
+                            <span className="block text-foreground/90 font-normal">
+                              You have not set your initial balance (cash + bank). Add it to calculate current balance and future cash flow accurately.
+                            </span>
+                            <span className="pt-1 block font-medium text-muted-foreground text-[11px]">
+                              Settings → Profile → Initial Balance
+                            </span>
+                          </div>
+                        }
                       >
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="pointer-events-none absolute left-0 top-full z-30 mt-2 hidden w-78 rounded-xl border border-warning/25 bg-popover px-3.5 py-3 text-left text-xs leading-relaxed text-popover-foreground shadow-xl group-hover/initial-balance:block group-focus-within/initial-balance:block">
-                          <span className="mb-1 block font-semibold text-warning">Initial balance needed</span>
-                          You have not set your initial balance (cash + bank). Add it to calculate current balance and future cash flow accurately.
-                          <span className="mt-1.5 block font-medium text-muted-foreground">Settings → Profile → Initial Balance</span>
+                        <span
+                          aria-label="Initial balance is not set. Set it in Settings, Profile, Initial Balance."
+                          tabIndex={0}
+                          className="inline-flex cursor-help rounded-sm text-warning outline-none focus-visible:ring-2 focus-visible:ring-warning/40"
+                        >
+                          <AlertTriangle className="h-4 w-4" />
                         </span>
-                      </span>
+                      </ActionTooltip>
                     )}
                   </p>
                   <AnimatedNumber value={stat.value} />

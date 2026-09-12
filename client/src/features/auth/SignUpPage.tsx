@@ -84,9 +84,8 @@ export default function SignUpPage() {
             </p>
           </motion.div>
 
-          <div className="border-t border-white/10 pt-4 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-slate-400">
+          <div className="border-t border-white/10 pt-4 flex items-center text-[11px] uppercase tracking-[0.2em] text-slate-400">
             <span>Personal Finance OS</span>
-            <span>Secure Encryption</span>
           </div>
         </div>
       </div>
