@@ -61,9 +61,11 @@ export default function SignUpPage() {
 
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-[12px] bg-primary flex items-center justify-center text-xl font-extrabold text-white shadow-lg shadow-primary/30">
-              n
-            </div>
+            <img
+              src="/nexus-favicon.svg"
+              alt="Nexus AI"
+              className="h-10 w-10 rounded-[10px]"
+            />
             <span className="text-xl font-bold tracking-tight text-white">Nexus AI</span>
           </div>
 
@@ -95,7 +97,11 @@ export default function SignUpPage() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md space-y-8">
           <div className="lg:hidden flex items-center gap-3 justify-center mb-4">
-            <div className="h-10 w-10 rounded-[11px] bg-accent text-white flex items-center justify-center font-extrabold">n</div>
+            <img
+              src="/nexus-favicon.svg"
+              alt="Nexus AI"
+              className="h-10 w-10 rounded-[10px]"
+            />
             <span className="text-2xl font-bold gradient-text">Nexus AI</span>
           </div>
 

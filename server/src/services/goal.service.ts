@@ -85,22 +85,39 @@ export class GoalService {
     });
 
 
-    if (data.currentAmount !== undefined && data.currentAmount > Number(existing.currentAmount)) {
-      const addedContribution = data.currentAmount - Number(existing.currentAmount);
-      const categoryId = await this.getSavingsCategory(userId);
-      await prisma.expense.create({
-        data: {
-          userId,
-          amount: addedContribution,
-          categoryId,
-          merchant: `Goal: ${updated.name}`,
-          date: new Date(),
-          paymentMethod: 'savings',
-          notes: `Contribution to goal "${updated.name}"`,
-          isAutoSynced: true,
-          syncSource: 'goal',
-        }
-      });
+    if (data.currentAmount !== undefined) {
+      const oldAmount = Number(existing.currentAmount);
+      const newAmount = Number(data.currentAmount);
+      if (newAmount > oldAmount) {
+        const addedContribution = newAmount - oldAmount;
+        const categoryId = await this.getSavingsCategory(userId);
+        await prisma.expense.create({
+          data: {
+            userId,
+            amount: addedContribution,
+            categoryId,
+            merchant: `Goal: ${updated.name}`,
+            date: new Date(),
+            paymentMethod: 'savings',
+            notes: `Contribution to goal "${updated.name}"`,
+            isAutoSynced: true,
+            syncSource: 'goal',
+          }
+        });
+      } else if (newAmount < oldAmount) {
+        const withdrawnAmount = oldAmount - newAmount;
+        await prisma.income.create({
+          data: {
+            userId,
+            amount: withdrawnAmount,
+            source: `Goal: ${updated.name}`,
+            date: new Date(),
+            notes: `Withdrawal / allocation return from goal "${updated.name}"`,
+            isAutoSynced: true,
+            syncSource: 'goal',
+          }
+        });
+      }
     }
 
     return updated;
@@ -109,6 +126,21 @@ export class GoalService {
   async delete(id: string, userId: string) {
     const existing = await prisma.goal.findFirst({ where: { id, userId, deletedAt: null } });
     if (!existing) throw new AppError(404, 'GOAL_NOT_FOUND', 'Goal not found');
+
+    const savedAmount = Number(existing.currentAmount);
+    if (savedAmount > 0) {
+      await prisma.income.create({
+        data: {
+          userId,
+          amount: savedAmount,
+          source: `Goal: ${existing.name}`,
+          date: new Date(),
+          notes: `Refund from deleted goal "${existing.name}"`,
+          isAutoSynced: true,
+          syncSource: 'goal',
+        }
+      });
+    }
 
     await prisma.goal.update({
       where: { id },

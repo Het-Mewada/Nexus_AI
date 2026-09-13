@@ -57,6 +57,9 @@ export default function GoalsPage() {
     mutationFn: (data: Partial<Goal>) => goalApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Goal added successfully");
       handleClose();
     },
@@ -67,6 +70,9 @@ export default function GoalsPage() {
     mutationFn: ({ id, data }: { id: string; data: Partial<Goal> }) => goalApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Goal updated successfully");
       handleClose();
     },
@@ -77,6 +83,9 @@ export default function GoalsPage() {
     mutationFn: (id: string) => goalApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["goals"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast.success("Goal deleted");
     },
     onError: () => toast.error("Failed to delete goal"),
