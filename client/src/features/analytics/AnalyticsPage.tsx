@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { analyticsApi, exportApi } from "@/services/api";
-import { formatCurrency, getMonthName } from "@/lib/utils";
+import { formatCurrency, formatCompactCurrency, getMonthName } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import type { ChartData, CashFlowData, CategoryBreakdownItem } from "@/types";
@@ -111,10 +111,9 @@ export default function AnalyticsPage() {
                   <div className="h-full w-full bg-muted animate-pulse rounded-lg" />
                 ) : charts?.monthlyComparison && charts.monthlyComparison.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={charts.monthlyComparison} margin={{ top: 8, right: 10, left: -15, bottom: 0 }}>
+                    <BarChart data={charts.monthlyComparison} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="month" interval={0} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 3)} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                      <XAxis dataKey="month" interval={0} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 3)} />                      <YAxis width={55} tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactCurrency(v, user?.currency)} />
                       <Tooltip
                         contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
                         labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}
@@ -146,10 +145,10 @@ export default function AnalyticsPage() {
                   <div className="h-full w-full bg-muted animate-pulse rounded-lg" />
                 ) : cashFlow?.cashFlow && cashFlow.cashFlow.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={cashFlow.cashFlow} margin={{ top: 8, right: 10, left: -10, bottom: 0 }}>
+                    <LineChart data={cashFlow.cashFlow} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="month" interval={0} tick={{ fontSize: 11 }} tickFormatter={(value) => String(value).slice(0, 3)} />
-                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => formatCurrency(v, user?.currency)} />
+                      <YAxis width={55} tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactCurrency(v, user?.currency)} />
                       <Tooltip
                         contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
                         labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}

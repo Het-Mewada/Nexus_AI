@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { analyticsApi, aiApi } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatCompactCurrency, formatDate } from "@/lib/utils";
 import type { DashboardSummary, ChartData } from "@/types";
 import { AgentInsights } from "@/features/ai-advisor/components/AgentInsights";
 import { PageHeader } from "@/components/ui/page-header";
@@ -260,10 +260,10 @@ export default function DashboardPage() {
             <CardContent>
               {c?.monthlyComparison ? (
                 <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={c.monthlyComparison.filter((m) => m.income > 0 || m.expense > 0).length > 0 ? c.monthlyComparison : c.monthlyComparison.slice(0, 6)}>
+                  <BarChart data={c.monthlyComparison.filter((m) => m.income > 0 || m.expense > 0).length > 0 ? c.monthlyComparison : c.monthlyComparison.slice(0, 6)} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(0, 3)} />
-                    <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                    <YAxis width={55} tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactCurrency(v, user?.currency)} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
                       labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}
@@ -453,10 +453,10 @@ export default function DashboardPage() {
           <CardContent>
             {c?.monthlyComparison ? (
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={c.monthlyComparison}>
+                <LineChart data={c.monthlyComparison} margin={{ top: 8, right: 10, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(0, 3)} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                  <YAxis width={55} tick={{ fontSize: 11 }} tickFormatter={(v) => formatCompactCurrency(v, user?.currency)} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "var(--color-card)", borderColor: "var(--color-border)", borderRadius: "12px", boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.4)" }}
                     labelStyle={{ color: "var(--color-foreground)", fontWeight: "bold", marginBottom: "4px" }}

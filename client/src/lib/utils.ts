@@ -21,6 +21,42 @@ export function formatCurrency(amount: number, currency?: string): string {
   }).format(amount);
 }
 
+export function formatCompactCurrency(amount: number, currency?: string): string {
+  if (amount === 0) {
+    const symbol = currencies.find((c) => c.value === (currency || "INR"))?.symbol || "₹";
+    return `${symbol}0`;
+  }
+
+  const currentCurrency =
+    currency || (typeof window !== "undefined" ? localStorage.getItem("user_currency") : null) || "INR";
+
+  let locale = "en-IN";
+  if (currentCurrency === "USD") locale = "en-US";
+  else if (currentCurrency === "EUR") locale = "de-DE";
+  else if (currentCurrency === "GBP") locale = "en-GB";
+
+  try {
+    const formatted = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currentCurrency,
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    }).format(amount);
+
+    return formatted.replace(/\.0(?=[KkLMmBbCr]|$)/, "");
+  } catch {
+    const symbol = currencies.find((c) => c.value === currentCurrency)?.symbol || "₹";
+    const abs = Math.abs(amount);
+    const sign = amount < 0 ? "-" : "";
+
+    if (abs >= 10_000_000) return `${sign}${symbol}${(abs / 10_000_000).toFixed(1).replace(/\.0$/, "")}Cr`;
+    if (abs >= 100_000) return `${sign}${symbol}${(abs / 100_000).toFixed(1).replace(/\.0$/, "")}L`;
+    if (abs >= 1_000) return `${sign}${symbol}${(abs / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+    return `${sign}${symbol}${abs}`;
+  }
+}
+
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
