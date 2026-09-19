@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../config/database";
 
 // Define default features for new instantiations or fallback
 export const DEFAULT_FEATURES: Record<string, string> = {};
